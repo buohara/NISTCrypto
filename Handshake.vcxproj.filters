@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\bigint.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\primes.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="inc\bigint.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\commoninc.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\primes.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\test.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="inc">
+      <UniqueIdentifier>{b1bfedca-9e9e-4f71-bc75-d1d8b80107f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{e250120b-475b-4803-b257-fb784745eb92}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
