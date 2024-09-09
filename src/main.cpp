@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
+
 #include "primes.h"
 #include "bigint.h"
 
@@ -10,26 +9,25 @@ int main(int argc, char** argv)
     6962155154859963260211100482357357666900094513013513488352858667799199787495340476167566639530574848375895722792291996203873323650274512138128403360943634134259376986501375967452208380337012919869885380406071772232795575963202558402893589313281327208179913789760736615950818685956393838601277519011418885197723428318400763080858914698836058070301404903262955501113318317950597435778777212408626799143
     */
 
-    BigInt a("700", 10);
+    /*BigInt a("32168516513513", 10);
     printf("BigInt a in decimal: %s\n", a.GetDecimalString().c_str());
 
-    //BigInt a("32168516513513", 10);
-    //printf("BigInt a in decimal: %s\n", a.GetDecimalString().c_str());
-
     BigInt b("111010100000111010000111111111110111011101001", 2);
-    printf("BigInt b in binary: %s\n", a.GetBinaryString().c_str());
+    printf("BigInt b in binary: %s\n", b.GetBinaryString().c_str());
 
     BigInt c("1D41D0FFEEE9", 16);
-    printf("BigInt c in hex: %s\n", a.GetHexString().c_str());
+    printf("BigInt c in hex: %s\n", c.GetHexString().c_str());*/
 
-    //TestResult res = TestAssignBigInt();
-    //res = TestLeftShiftBigInt();
-    //res = TestRightShiftBigInt();
+    srand((unsigned int)time(NULL));
 
-    //res = TestCompoundAddBigInt();
-    //res = TestCompoundSubtractBigInt();
-    //res = TestCompoundMultiplyBigInt();
-    //res = TestCompoundDivideBigInt();
+    TestResult res = TestAssignBigInt();
+    res = TestLeftShiftBigInt();
+    res = TestRightShiftBigInt();
+
+    res = TestCompoundAddBigInt();
+    res = TestCompoundSubtractBigInt();
+    res = TestCompoundMultiplyBigInt();
+    res = TestCompoundDivideBigInt();
 
     return 0;
 }

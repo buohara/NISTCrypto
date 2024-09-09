@@ -4,7 +4,7 @@
 
 using namespace std;
 
-#define BYTES(x) ((x / 8) + (x % 8 ? 1 : 0))
+#define BYTES(x) (((x) / 8) + ((x) % 8 ? 1 : 0))
 
 #include "test.h"
 
@@ -69,11 +69,15 @@ struct BigInt
 
             nBits = val.length();
             data.resize(BYTES(nBits));
+            string valRev = val;
+
+            for (uint64_t i = 0; i < val.length(); i++)
+                valRev[i] = val[val.length() - i - 1];
 
             for (uint64_t i = 0; i < val.length(); i++)
             {
                 uint64_t byteOut = i / 8;
-                data[byteOut] |= (binCharVals[val[i]] << i % 8);
+                data[byteOut] |= binCharVals[valRev[i]] << (i % 8);
             }
         }
 
@@ -104,34 +108,33 @@ struct BigInt
                 }
             }
 
-            BigInt res;
+            vector<uint8_t> outBytes;
+            string quot         = val;
 
-            for (uint64_t i = val.length(); i-- > 0;)
+            while (quot != "")
             {
-                vector<uint8_t> partial;
-                uint8_t rem     = decCharVals[val[i]];
-                uint64_t pow    = val.length() - i - 1;
+                string quotTmp;
+                bool bLeadZeros = true;
+                uint16_t rem    = 0;
 
-                while (pow >= 0)
+                for (uint64_t i = 0; i < quot.length(); i++)
                 {
-                    if (pow == 0)
-                    {
-                        partial.insert(partial.begin(), rem);
-                        break;
-                    }
-                    else
-                    {
-                        partial.insert(partial.begin(), rem / 256);
-                        rem = 10 * (rem % 256);
-                        pow--;
-                    }
+                    rem         *= 10;
+                    rem         += quot[i] - '0';
+
+                    if (bLeadZeros && (rem / 256 == 0))
+                        continue;
+
+                    quotTmp     += (rem / 256) + '0';
+                    bLeadZeros  = false;
+                    rem         = rem % 256;
                 }
 
-                BigInt partialInt = BigInt(partial);
-                res += partialInt;
+                outBytes.push_back((uint8_t)rem);
+                quot = quotTmp;
             }
 
-            *this = res;
+            *this = BigInt(outBytes);
         }
 
         if (base == 16)
@@ -148,12 +151,18 @@ struct BigInt
                 { '7', 0x7 },
                 { '8', 0x8 },
                 { '9', 0x9 },
-                { '4', 0xA },
-                { '5', 0xB },
-                { '6', 0xC },
-                { '7', 0xD },
-                { '8', 0xE },
-                { '9', 0xF }
+                { 'A', 0xA },
+                { 'B', 0xB },
+                { 'C', 0xC },
+                { 'D', 0xD },
+                { 'E', 0xE },
+                { 'F', 0xF },
+                { 'a', 0xA },
+                { 'b', 0xB },
+                { 'c', 0xC },
+                { 'd', 0xD },
+                { 'e', 0xE },
+                { 'f', 0xF }
             };
 
             for (uint64_t i = 0; i < val.length(); i++)
@@ -169,6 +178,10 @@ struct BigInt
 
             nBits = val.length() * 4;
             data.resize(BYTES(nBits));
+            string valRev = val;
+
+            for (uint64_t i = 0; i < val.length(); i++)
+                valRev[i] = val[val.length() - i - 1];
 
             for (uint64_t i = 0; i < val.length(); i++)
             {
@@ -231,7 +244,7 @@ struct BigInt
 
     BigInt(vector<uint8_t>& dataIn)
     {
-        if (data.size() == 0)
+        if (dataIn.size() == 0)
         {
             nBits = 1;
             data.resize(1);
@@ -248,8 +261,8 @@ struct BigInt
         }
         else 
         {
-            nBits = (data.size() - 1) * 8 + (uint64_t)(log2(data[data.size() - 1]) + 1);
-            memcpy(&this->data[0], &data[0], data.size());
+            nBits = (dataIn.size() - 1) * 8 + (uint64_t)(log2(dataIn[dataIn.size() - 1]) + 1);
+            memcpy(&this->data[0], &dataIn[0], data.size());
         }
         
     }
@@ -311,7 +324,7 @@ struct BigInt
     {
         string out = "";
 
-        for (uint64_t i = nBits - 1; i-- > 0;)
+        for (uint64_t i = 0; i < nBits; i++)
         {
             uint64_t byte   = i / 8;
             uint64_t bit    = i % 8;
@@ -343,13 +356,12 @@ struct BigInt
             uint8_t valLo   = data[i] & 0xF;
             uint8_t valHi   = (data[i] & 0xF0) >> 4;
 
-            if (i = data.size() - 1 && valHi == 0)
-                out = string{ hexChars[valLo] } + out;
+            if (i == data.size() - 1 && valHi == 0)
+                out = out + string{ hexChars[valLo] };
             else
-                out = string{ hexChars[valHi] } + string{ hexChars[valLo] } + out;
+                out = out + string{ hexChars[valLo] } + string{ hexChars[valHi] };
         }
 
-        
         return "0x" + out;
     }
 
@@ -384,25 +396,29 @@ struct BigInt
 
     BigInt& operator<<=(uint64_t shift)
     {
-        uint64_t nBitsPrev      = nBits;
-        uint64_t nBytesPrev     = data.size();
-        nBits                   += shift;
-        uint64_t nBytes         = BYTES(nBits);
+        if (shift == 0)
+            return *this;
 
-        data.resize(nBytes);
-        memcpy(&data[nBits], &data[nBitsPrev], nBytesPrev);
+        uint8_t hiMasks[8]  = { 0x00, 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE };
+        uint8_t loMasks[8]  = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0F, 0x07, 0x03, 0x01 };
+        uint8_t shiftCarry  = shift % 8;
 
-        uint64_t byteIdx = 0;
+        uint8_t maskHi      = hiMasks[shiftCarry];
+        uint8_t maskLo      = loMasks[shiftCarry];
 
-        while (shift >= 8)
+        vector<uint8_t> valsOut(BYTES(nBits + shift));
+        uint64_t byteShift  = shift / 8;
+
+        for (uint64_t i = 0; i < data.size(); i++)
         {
-            data[byteIdx++] = 0;
-            shift -= 8;
+            uint64_t targetHi = byteShift + i + (((shift % 8) + nBits > 8) ? 1 : 0);
+            uint64_t targetLo = byteShift + i;
+
+            valsOut[targetHi] |= ((data[i] & maskHi) >> (8 - shiftCarry));
+            valsOut[targetLo] |= (data[i] & maskLo) << shiftCarry;
         }
 
-        if (shift)
-            data[byteIdx] &= ~shift;
-
+        *this = BigInt(valsOut);
         return *this;
     }
 
@@ -416,24 +432,16 @@ struct BigInt
 
     BigInt& operator>>=(uint64_t shift)
     {
-        uint64_t nBitsPrev      = nBits;
-        uint64_t nBytesPrev     = data.size();
-        nBits                   -= shift;
-        uint64_t nBytes         = BYTES(nBits);
+        if (shift == 0)
+            return *this;
 
-        data.resize(nBytes);
-        memcpy(&data[nBits], &data[nBitsPrev], nBytes);
-
-        uint64_t hiByte         = nBytesPrev;
-
-        while (shift >= 8)
+        if (shift >= nBits)
         {
-            data[hiByte--] = 0;
-            shift -= 8;
+            data.resize(1);
+            data[0] = 0;
+            nBits   = 1;
+            return *this;
         }
-
-        if (shift)
-            data[hiByte] &= ~(0xFF - shift);
 
         return *this;
     }

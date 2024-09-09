@@ -1,8 +1,8 @@
 #include "bigint.h"
 
-static const uint64_t nSizes                    = 6;
+static const uint64_t nSizes                    = 10;
 static const uint64_t maxShift                  = 16;
-static const uint64_t testIntBitSizes[nSizes]   = { 32, 64, 128, 256, 512 };
+static const uint64_t testIntBitSizes[nSizes]   = { 7, 32, 41, 64, 103, 128, 211, 256, 388, 512 };
 static const uint64_t numCasesPerSize           = 10;
 
 /**
@@ -16,7 +16,7 @@ void BigIntRand(uint64_t nBits, BigInt &bigInt)
     uint64_t nBytes = BYTES(nBits);
     vector<uint8_t> vals(nBytes);
 
-    for (uint64_t i = 0; i < nBytes - 1; i++)
+    for (uint64_t i = 0; i < nBytes; i++)
         vals[i] = rand() % 256;
 
     uint64_t msByteBits = nBits % 8;
@@ -63,51 +63,42 @@ double BigIntToDouble(const BigInt& val)
 
 void DoubleToBigInt(const double val, BigInt &out)
 {
-    double tmp = val;
-    vector<uint8_t> outVals;
-
-    map<double, uint8_t> doubleToByteMap =
+    if (val == 0.0)
     {
-        {  0.0, 0x0 },
-        {  1.0, 0x1 },
-        {  2.0, 0x2 },
-        {  3.0, 0x3 },
-        {  4.0, 0x4 },
-        {  5.0, 0x5 },
-        {  6.0, 0x6 },
-        {  7.0, 0x7 },
-        {  8.0, 0x8 },
-        {  9.0, 0x9 },
-        { 10.0, 0xA },
-        { 11.0, 0xB },
-        { 12.0, 0xC },
-        { 13.0, 0xD },
-        { 14.0, 0xE },
-        { 15.0, 0xF }
-    };
+        out.data.resize(0);
+        out.data[0]         = 0;
+        out.nBits           = 1;
+        return;
+    }
 
-    bool bStore     = false;
-    uint8_t curByte = 0x00;
+    double tmp              = val;
+    uint64_t outBytes       = 1;
+    double base             = 256.0;
+    double pow              = 256.0;
 
+    while (pow < val)
+    {
+        pow *= base;
+        outBytes++;
+    }
+
+    vector<uint8_t> outVals(outBytes);
+    
     while (tmp > 0.0)
     {
-        double mod = fmod(tmp, 16.0);
-        curByte += doubleToByteMap[mod];
+        uint64_t outIdx     = 0;
+        pow                 = 1.0;
 
-        if (!bStore)
+        while (pow * base < tmp)
         {
-            curByte <<= 4;
-            bStore  = true;
-        }
-        else
-        {
-            outVals.push_back(curByte);
-            curByte = 0;
-            bStore  = false;
+            pow *= base;
+            outIdx++;
         }
 
-        tmp -= mod;
-        tmp /= 16.0;
+        double rem          = fmod(tmp, pow);
+        double quot         = (tmp - rem) / pow;
+        outVals[outIdx]     = (uint8_t)quot;
+        tmp                 -= pow * quot;
     }
 
     out = BigInt(outVals);
@@ -173,8 +164,8 @@ TestResult TestLeftShiftBigInt()
             BigIntRand(testIntBitSizes[i], randInt);
 
             double randDbl  = BigIntToDouble(randInt);
-            uint64_t shift  = rand() % maxShift;
-            randInt         >>= shift;
+            uint64_t shift  = (rand() + 1) % maxShift;
+            randInt         <<= shift;
 
             for (uint64_t k = 0; k < shift; k++)
                 randDbl *= 2.0;
