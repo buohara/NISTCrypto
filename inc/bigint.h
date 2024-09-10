@@ -48,6 +48,14 @@ struct BigInt
         if (base != 10 && base != 2 && base != 16)
             throw invalid_argument("Big int string constructor expected base 10, 2, or 16.");
 
+        if (val == "")
+        {
+            data.resize(1);
+            data[0]     = 0;
+            nBits       = 1;
+            return;
+        }
+
         if (base == 2)
         {
             map<char, uint8_t> binCharVals =
@@ -252,7 +260,16 @@ struct BigInt
             return;
         }
 
-        this->data.resize(dataIn.size());
+        uint64_t nBytes = dataIn.size();
+
+        for (uint64_t i = dataIn.size(); i-- > 1;)
+            if (dataIn[i] == 0)
+                nBytes--;
+            else
+                break;
+
+        dataIn.resize(nBytes);
+        data.resize(nBytes);
 
         if (dataIn.size() == 1 && dataIn[0] == 0)
         {
@@ -332,7 +349,7 @@ struct BigInt
             out = (data[byte] & (1 << bit) ? "1" : "0") + out;
         }
 
-        return out + "b";
+        return out;
     }
 
     /**
@@ -406,12 +423,12 @@ struct BigInt
         uint8_t maskHi      = hiMasks[shiftCarry];
         uint8_t maskLo      = loMasks[shiftCarry];
 
-        vector<uint8_t> valsOut(BYTES(nBits + shift));
+        vector<uint8_t> valsOut(BYTES(8 * data.size() + shift));
         uint64_t byteShift  = shift / 8;
 
         for (uint64_t i = 0; i < data.size(); i++)
         {
-            uint64_t targetHi = byteShift + i + (((shift % 8) + nBits > 8) ? 1 : 0);
+            uint64_t targetHi = byteShift + i + ((shift % 8) ? 1 : 0);
             uint64_t targetLo = byteShift + i;
 
             valsOut[targetHi] |= ((data[i] & maskHi) >> (8 - shiftCarry));
@@ -438,11 +455,34 @@ struct BigInt
         if (shift >= nBits)
         {
             data.resize(1);
-            data[0] = 0;
-            nBits   = 1;
+            data[0]                 = 0;
+            nBits                   = 1;
             return *this;
         }
 
+        uint8_t loMasks[8]          = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F };
+        uint8_t hiMasks[8]          = { 0xFF, 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80 };
+        uint8_t shiftCarry          = shift % 8;
+
+        uint8_t maskLo              = loMasks[shiftCarry];
+        uint8_t maskHi              = hiMasks[shiftCarry];
+
+        vector<uint8_t> valsOut(BYTES(8 * data.size() + shift));
+        uint64_t byteShift = shift / 8;
+
+        for (uint64_t i = 0; i < data.size(); i++)
+        {
+            int64_t targetLo        = i - byteShift - ((shift % 8) ? 1 : 0);
+            int64_t targetHi        = i - byteShift;
+
+            if (targetHi >= 0)
+                valsOut[targetHi]   |= ((data[i] & maskHi) >> shiftCarry);
+            
+            if (targetLo >= 0)
+                valsOut[targetLo]   |= (data[i] & maskLo) << (8 - shiftCarry);
+        }
+
+        *this = BigInt(valsOut);
         return *this;
     }
 
@@ -457,17 +497,32 @@ struct BigInt
     BigInt& operator+=(const BigInt& rhs)
     {
         uint64_t maxBits    = max(nBits, rhs.nBits) + 1;
-        uint64_t nBytes     = BYTES(maxBits);
+        uint64_t outBytes   = BYTES(maxBits);
         
-        data.resize(nBytes);
-        uint8_t carry = 0;
+        data.resize(outBytes);
 
-        for (uint64_t i = 0; i < data.size(); i++)
+        uint64_t lSize      = data.size();
+        uint64_t rSize      = rhs.data.size();
+        uint8_t carry       = 0;
+
+        for (uint64_t i = 0; i < outBytes; i++)
         {
-            uint16_t sum    = data[i] + rhs.data[i] + carry;
+            uint8_t lVal    = i < lSize ? data[i] : 0;
+            uint8_t rVal    = i < rSize ? rhs.data[i] : 0;
+            uint16_t sum    = lVal + rVal + carry;
+
             data[i]         = sum & 0xFF;
             carry           = sum >> 8;
         }
+
+        uint64_t nBytes     = data.size();
+
+        for (uint64_t i = data.size(); i-- > 0;)
+            if (data[i] == 0)
+                nBytes--;
+
+        data.resize(nBytes);
+        nBits = 8 * (nBytes - 1) + (log2(data[data.size() - 1]) + 1);
 
         return *this;
     }
@@ -482,13 +537,20 @@ struct BigInt
 
     BigInt& operator-=(const BigInt& rhs)
     {
-        nBits               = max(nBits, rhs.nBits) + 1;
-        uint64_t nBytes     = BYTES(nBits);
+        uint64_t maxBits    = max(nBits, rhs.nBits) + 1;
+        uint64_t outBytes   = BYTES(maxBits);
 
-        data.resize(nBytes);
+        data.resize(outBytes);
 
-        for (uint64_t i = 0; i < data.size(); i++)
-            data[i] -= rhs.data[i];
+        uint64_t lSize      = data.size();
+        uint64_t rSize      = rhs.data.size();
+
+        for (uint64_t i = 0; i < outBytes; i++)
+        {
+            uint8_t lVal    = i < lSize ? data[i] : 0;
+            uint8_t rVal    = i < rSize ? rhs.data[i] : 0;
+            data[i]         = lVal - rVal;
+        }
 
         return *this;
     }

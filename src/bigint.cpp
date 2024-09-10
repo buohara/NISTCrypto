@@ -28,10 +28,9 @@ void BigIntRand(uint64_t nBits, BigInt &bigInt)
 }
 
 /**
- * HexArrayToDouble - For testing large integers, use 64-bit float arithmetic
- * for comparison. Here, convert a byte array to a double.
+ * HexArrayToDouble - Convert an integer stored in a byte array to a double.
  *
- * @param val   [in] Input integer value array to convert to double.
+ * @param val   [in] Input integer byte array to convert to double.
  * 
  * @return      Double representation of input integer.
  */
@@ -47,7 +46,7 @@ double BigIntToDouble(const BigInt& val)
             throw overflow_error("Double overflow converting big integer to double.");
 
         result  += ((double)val.data[i]) * pow;
-        pow     *= 16.0;
+        pow     *= 256.0;
     }
 
     return result;
@@ -65,7 +64,7 @@ void DoubleToBigInt(const double val, BigInt &out)
 {
     if (val == 0.0)
     {
-        out.data.resize(0);
+        out.data.resize(1);
         out.data[0]         = 0;
         out.nBits           = 1;
         return;
@@ -163,17 +162,16 @@ TestResult TestLeftShiftBigInt()
             BigInt randInt;
             BigIntRand(testIntBitSizes[i], randInt);
 
-            double randDbl  = BigIntToDouble(randInt);
-            uint64_t shift  = (rand() + 1) % maxShift;
-            randInt         <<= shift;
+            string binString    = randInt.GetBinaryString();
+            uint64_t shift      = rand() % (maxShift - 1) + 1;
+            randInt             <<= shift;
 
-            for (uint64_t k = 0; k < shift; k++)
-                randDbl *= 2.0;
+            for (uint64_t i = 0; i < shift; i++)
+                binString = binString + '0';
 
-            BigInt dbl2Int;
-            DoubleToBigInt(randDbl, dbl2Int);
+            BigInt str2Int(binString, 2);
 
-            if (!(randInt == dbl2Int))
+            if (!(randInt == str2Int))
             {
                 char msg[256];
                 res.code = FAIL;
@@ -181,11 +179,12 @@ TestResult TestLeftShiftBigInt()
                 sprintf(
                     msg, 
                     "BigInt left shift failed. Expected = %s, actual = %s",
-                    dbl2Int.GetHexString().c_str(),
+                    str2Int.GetHexString().c_str(),
                     randInt.GetHexString().c_str()
                 );
 
                 res.msg = string(msg);
+                return res;
             }
         }
     }
@@ -216,32 +215,31 @@ TestResult TestRightShiftBigInt()
             BigInt randInt;
             BigIntRand(testIntBitSizes[i], randInt);
 
-            double randDbl  = BigIntToDouble(randInt);
-            uint64_t shift  = rand() % maxShift;
-            randInt         >>= shift;
+            string binString    = randInt.GetBinaryString();
+            uint64_t shift      = rand() % (maxShift - 1) + 1;
+            randInt             >>= shift;
 
-            for (uint64_t k = 0; k < shift; k++)
-            {
-                randDbl -= fmod(randDbl, 2.0);
-                randDbl /= 2.0;
-            }
+            if (shift >= testIntBitSizes[i])
+                binString = "";
+            else
+                binString = binString.substr(0, binString.length() - shift);
+            
+            BigInt str2Int(binString, 2);
 
-            BigInt dbl2Int;
-            DoubleToBigInt(randDbl, dbl2Int);
-
-            if (!(randInt == dbl2Int))
+            if (!(randInt == str2Int))
             {
                 char msg[256];
                 res.code = FAIL;
                 
                 sprintf(
                     msg, 
-                    "BigInt left shift failed. Expected = %s, actual = %s",
-                    dbl2Int.GetHexString().c_str(),
+                    "BigInt right shift failed. Expected = %s, actual = %s",
+                    str2Int.GetHexString().c_str(),
                     randInt.GetHexString().c_str()
                 );
 
                 res.msg = string(msg);
+                return res;
             }
         }
     }
@@ -288,12 +286,13 @@ TestResult TestCompoundAddBigInt()
 
                 sprintf(
                     msg,
-                    "BigInt compound failed. Expected = %s, actual = %s",
+                    "BigInt compound add failed. Expected = %s, actual = %s",
                     a.GetHexString().c_str(),
                     aDblToInt.GetHexString().c_str()
                 );
 
                 res.msg = string(msg);
+                return res;
             }
         }
     }
@@ -340,12 +339,13 @@ TestResult TestCompoundSubtractBigInt()
 
                 sprintf(
                     msg,
-                    "BigInt left shift failed. Expected = %s, actual = %s",
+                    "BigInt compound subtract failed. Expected = %s, actual = %s",
                     a.GetHexString().c_str(),
                     aDblToInt.GetHexString().c_str()
                 );
 
                 res.msg = string(msg);
+                return res;
             }
         }
     }
@@ -400,12 +400,13 @@ TestResult TestCompoundMultiplyBigInt()
 
                 sprintf(
                     msg,
-                    "BigInt left shift failed. Expected = %s, actual = %s",
+                    "BigInt compound multiply failed. Expected = %s, actual = %s",
                     a.GetHexString().c_str(),
                     aDblToInt.GetHexString().c_str()
                 );
 
                 res.msg = string(msg);
+                return res;
             }
         }
     }
@@ -452,12 +453,13 @@ TestResult TestCompoundDivideBigInt()
 
                 sprintf(
                     msg,
-                    "BigInt left shift failed. Expected = %s, actual = %s",
+                    "BigInt compound divide failed. Expected = %s, actual = %s",
                     a.GetHexString().c_str(),
                     aDblToInt.GetHexString().c_str()
                 );
 
                 res.msg = string(msg);
+                return res;
             }
         }
     }

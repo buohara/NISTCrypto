@@ -21,13 +21,25 @@ int main(int argc, char** argv)
     srand((unsigned int)time(NULL));
 
     TestResult res = TestAssignBigInt();
+    assert(res.code == PASS);
+
     res = TestLeftShiftBigInt();
+    assert(res.code == PASS);
+
     res = TestRightShiftBigInt();
+    assert(res.code == PASS);
 
     res = TestCompoundAddBigInt();
+    assert(res.code == PASS);
+
     res = TestCompoundSubtractBigInt();
+    assert(res.code == PASS);
+
     res = TestCompoundMultiplyBigInt();
+    assert(res.code == PASS);
+
     res = TestCompoundDivideBigInt();
+    assert(res.code == PASS);
 
     return 0;
 }
