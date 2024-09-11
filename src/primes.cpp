@@ -16,8 +16,7 @@ void Seive(const uint64_t min, const uint64_t max, vector<uint64_t> &primes)
     if (primes.size() != 0)
         throw invalid_argument("Prime seive expects prime list argument to be empty");
 
-    uint64_t primeCnt       = 0;
-
+    uint64_t primeCnt = 0;
     vector<bool> composites(max - min + 1, false);
 
     if (min == 0)
@@ -28,19 +27,19 @@ void Seive(const uint64_t min, const uint64_t max, vector<uint64_t> &primes)
 
     for (uint64_t i = 2; i * i <= max; i++)
     {
-        uint64_t offset = (i < min) ? ((i * (min / i)) + (min % i ? i : 0) - min) :
-            2 * i;
+        uint64_t offset = (i < min) ? ((i * (min / i)) + (min % i ? i : 0) - min) : 2 * i;
 
         for (uint64_t j = offset; j < composites.size(); j += i)
             composites[j] = true;
     }
 
     for (uint64_t i = 0; i < composites.size(); i++)
+    {
         if (!composites[i])
             primeCnt++;
+    }
 
     primes.resize(primeCnt);
-
     uint64_t offset = 0;
 
     for (uint64_t i = 0; i < composites.size(); i++)
@@ -51,7 +50,7 @@ void Seive(const uint64_t min, const uint64_t max, vector<uint64_t> &primes)
 /**
  * IsSquare - Determine if an input integer is square.
  * 
- * @param val   [in]
+ * @param val   [in] Value to check for wquareness.
  */
 
 __inline bool IsSquare(const uint64_t val)

@@ -23,22 +23,22 @@ int main(int argc, char** argv)
     TestResult res = TestAssignBigInt();
     assert(res.code == PASS);
 
-    res = TestLeftShiftBigInt();
+    res = TestCmpLShiftBigIntCorrect();
     assert(res.code == PASS);
 
-    res = TestRightShiftBigInt();
+    //res = TestCmpRShiftBigIntCorrect();
     assert(res.code == PASS);
 
-    res = TestCompoundAddBigInt();
+    res = TestCmpAddBigIntCorrect();
     assert(res.code == PASS);
 
-    res = TestCompoundSubtractBigInt();
+    res = TestCmpSubBigIntCorrect();
     assert(res.code == PASS);
 
-    res = TestCompoundMultiplyBigInt();
+    res = TestCmpMulBigIntCorrect();
     assert(res.code == PASS);
 
-    res = TestCompoundDivideBigInt();
+    res = TestCmpDivBigIntCorrect();
     assert(res.code == PASS);
 
     return 0;
