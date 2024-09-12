@@ -8,6 +8,7 @@ static const uint64_t numCasesPerSize           = 10;
 static void DivideU8(const BigInt& dividend, const uint8_t divisor, BigInt& quotient, uint8_t& rem);
 static void AddBinaryStrings(const string& u1, const string& u2, vector<uint8_t> &sum);
 static void SubtractBinaryStrings(const string& u1, const string& u2, vector<uint8_t>& sum);
+static void MultiplyBinaryStrings(const string& u1, const string& u2, string& prod);
 
 /**
  * ParseHexString - Convert an integer represented as a hex string to a
@@ -314,11 +315,11 @@ TestResult TestCmpRShiftBigIntCorrect()
 
             string shiftString;
 
-            if (shift >= testIntBitSizes[i])
+            if (shift >= binString.length())
                 shiftString = "";
             else
                 shiftString = binString.substr(0, binString.length() - shift);
-            
+
             BigInt str2Int(shiftString, 2);
 
             if (!(randInt == str2Int))
@@ -415,12 +416,10 @@ TestResult TestCmpSubBigIntCorrect()
     {
         for (uint64_t j = 0; j < numCasesPerSize; j++)
         {
-            //BigInt a("11011101000000000010000000111010", 2);
             BigInt a;
             BigIntRand(testIntBitSizes[i], a);
             string aBin = a.GetBinaryString();
 
-            //BigInt b("10001011101001111101110100111111", 2);
             BigInt b;
             BigIntRand(testIntBitSizes[i], b);
             string bBin = b.GetBinaryString();
@@ -474,18 +473,19 @@ TestResult TestCmpMulBigIntCorrect()
         {
             BigInt a;
             BigIntRand(testIntBitSizes[i], a);
+            string aBin = a.GetBinaryString();
 
             BigInt b;
+            BigIntRand(testIntBitSizes[i], b);
+            string bBin = b.GetBinaryString();
 
-            while (1) 
-            {
-                BigIntRand(testIntBitSizes[i], b);
-            }
+            a *= b;
+            string prod;
+            MultiplyBinaryStrings(aBin, bBin, prod);
 
-            a           *= b;
-            BigInt aDblToInt;
+            BigInt strToInt = BigInt(prod, 2);
 
-            if (!(a == aDblToInt))
+            if (!(a == strToInt))
             {
                 char msg[256];
                 res.code = FAIL;
@@ -494,7 +494,7 @@ TestResult TestCmpMulBigIntCorrect()
                     msg,
                     "BigInt compound multiply failed. Expected = %s, actual = %s",
                     a.GetHexString().c_str(),
-                    aDblToInt.GetHexString().c_str()
+                    strToInt.GetHexString().c_str()
                 );
 
                 res.msg = string(msg);
@@ -542,6 +542,53 @@ TestResult TestCmpDivBigIntCorrect()
                     "BigInt compound divide failed. Expected = %s, actual = %s",
                     a.GetHexString().c_str(),
                     aDblToInt.GetHexString().c_str()
+                );
+
+                res.msg = string(msg);
+                return res;
+            }
+        }
+    }
+
+    res.code    = PASS;
+    res.msg     = "";
+
+    return res;
+}
+
+/**
+ * TestSqrtCorrect - Test big integer square root function. Generate random large ints, square them,
+ * then check Sqrt returns the original int.
+ *
+ * @return  Pass if squareroots match, fail otherwise.
+ */
+
+TestResult TestSqrtCorrect()
+{
+    TestResult res;
+
+    for (uint64_t i = 0; i < nSizes; i++)
+    {
+        for (uint64_t j = 0; j < numCasesPerSize; j++)
+        {
+            BigInt a;
+            BigIntRand(testIntBitSizes[i], a);
+
+            BigInt square   = a;
+            square          *= a;
+
+            BigInt root = square.Sqrt();
+
+            if (!(a == root))
+            {
+                char msg[256];
+                res.code = FAIL;
+
+                sprintf(
+                    msg,
+                    "BigInt square root failed. Expected = %s, actual = %s",
+                    a.GetHexString().c_str(),
+                    root.GetHexString().c_str()
                 );
 
                 res.msg = string(msg);
@@ -985,6 +1032,21 @@ BigInt& BigInt::operator+=(const BigInt& rhs)
 }
 
 /**
+ * BigInt::operator+ - Integer addition operator.
+ *
+ * @param rhs   [in] Second addend.
+ *
+ * @return  Sum of this and rhs.
+ */
+
+BigInt BigInt::operator+(const BigInt& rhs) const
+{
+    BigInt res = *this;
+    res += rhs;
+    return res;
+}
+
+/**
  * BigInt::operator-= - Compound integer subtraction operator.
  *
  * @param rhs       [in] Int to subtract from this one.
@@ -1049,6 +1111,22 @@ BigInt& BigInt::operator-=(const BigInt& rhs)
 }
 
 /**
+ * BigInt::operator- - Integer subraction operator.
+ *
+ * @param rhs   [in] Int to subtract from this.
+ *
+ * @return  Difference of this and rhs.
+ */
+
+BigInt BigInt::operator-(const BigInt& rhs) const
+{
+    BigInt res = *this;
+    res -= rhs;
+    return res;
+}
+
+
+/**
  * BigInt::operator*= - Compound integer multiplication.
  *
  * @param rhs       [in] Integer to multiply this integer by.
@@ -1063,11 +1141,11 @@ BigInt& BigInt::operator*=(const BigInt& rhs)
     uint64_t bytesOut   = n + m - 1;
 
     vector<uint8_t> product;
-    uint8_t carry = 0;
+    uint32_t carry = 0;
 
     for (uint64_t i = 0; i < bytesOut; i++)
     {
-        uint16_t sum = 0;
+        uint32_t sum = 0;
 
         for (uint64_t j = 0; j <= i; j++)
         {
@@ -1079,9 +1157,12 @@ BigInt& BigInt::operator*=(const BigInt& rhs)
             sum += data[j] * rhs.data[k];
         }
 
-        uint8_t out     = (sum & 0x00FF) + carry;
+        sum += carry;
+
+        uint8_t out     = sum & 0xFF;
+        carry           = sum >> 8;
+
         product.push_back(out);
-        carry           = (sum >> 8) & 0xFF;
     }
 
     if (carry)
@@ -1092,28 +1173,272 @@ BigInt& BigInt::operator*=(const BigInt& rhs)
 }
 
 /**
- * BigInt::operator/= -
+ * BigInt::operator* - Integer multiplication operator.
  *
- * @param rhs
+ * @param rhs   [in] Int to multiply this one by.
  *
- * @return
+ * @return  Product of this and rhs.
  */
 
-BigInt& BigInt::operator/=(const BigInt& rhs)
+BigInt BigInt::operator*(const BigInt& rhs) const
 {
+    BigInt res = *this;
+    res *= rhs;
+    return res;
+}
+
+/**
+ * BigInt::operator*= - Compound integer multiplication.
+ *
+ * @param rhs       [in] Integer to multiply this integer by.
+ *
+ * @return          Reference to product.
+ */
+
+BigInt& BigInt::operator*=(const uint8_t rhs)
+{
+    uint16_t dig;
+    uint16_t carry;
+
+    vector<uint8_t> vals;
+
+    for (uint64_t i = 0; i < data.size(); i++)
+    {
+        dig = data[i] * rhs;
+        vals.push_back(dig & 0xFF);
+        carry = dig >> 8;
+    }
+
+    if (carry)
+        vals.push_back((uint8_t)carry);
+
+    *this = BigInt(vals);
     return *this;
 }
 
 /**
- * BigInt::Sqrt - Get the square root of this int N. The squareroot s is the smallest
- * int such that s * s <= N. 
+ * BigInt::operator* - Integer multiplication operator.
+ *
+ * @param rhs   [in] Int to multiply this one by.
+ *
+ * @return  Product of this and rhs.
+ */
+
+BigInt BigInt::operator*(const uint8_t rhs) const
+{
+    BigInt res = *this;
+    res *= rhs;
+    return res;
+}
+
+/**
+ * BigInt::operator/= - BigInt compound division operator.
+ *
+ * @param rhs   [in] Divisor.
+ *
+ * @return      Quotient of this int divided by RHS.
+ */
+
+BigInt& BigInt::operator/=(const BigInt& rhs)
+{
+    if (rhs > *this)
+    {
+        data.resize(1);
+        data[0]     = 0;
+        nBits       = 1;
+        
+        return *this;
+    }
+
+    if (this == &rhs || *this == rhs)
+    {
+        data.resize(1);
+        data[0]     = 1;
+        nBits       = 1;
+        
+        return *this;
+    }
+
+    vector<uint8_t> vals;
+
+    BigInt rem      = *this;
+    uint8_t leadRHS = rhs.data[rhs.data.size() - 1];
+
+    while (1)
+    {
+        uint16_t leadDiv    = rem.data[rem.data.size() - 1];
+        uint64_t i          = 1;
+
+        while (leadDiv / leadRHS == 0)
+        {
+            leadDiv = leadDiv * 256 + rem.data[rem.data.size() - i - 1];
+            i++;
+        }
+
+        uint8_t curQuot = leadDiv / leadRHS;
+        
+        while (rhs * curQuot > rem)
+            curQuot--;
+
+        vals.push_back(curQuot);
+        rem = rem - rhs * curQuot;
+
+        if (rhs > rem)
+            break;
+    }
+
+    *this = BigInt(vals);
+    return *this;
+}
+
+/**
+ * BigInt::operator/= - BigInt compound division operator.
+ *
+ * @param rhs   [in] Divisor.
+ *
+ * @return      Quotient of this int divided by RHS.
+ */
+
+BigInt& BigInt::operator/=(const uint8_t rhs)
+{
+    BigInt dividend = *this;
+    uint8_t divisor = rhs;
+    BigInt quot;
+    uint8_t rem;
+
+    DivideU8(dividend, divisor, quot, rem);
+    *this = quot;
+    return *this;
+}
+
+/**
+ * BigInt::operator/ - Integer division operator.
+ *
+ * @param rhs   [in] Int to divide this one by.
+ *
+ * @return  Quotient of this and rhs.
+ */
+
+BigInt BigInt::operator/(const BigInt& rhs) const
+{
+    BigInt res  = *this;
+    res         /= rhs;
+    return      res;
+}
+
+/**
+ * BigInt::operator++ - Increment this int by 1.
+ *
+ * @return This int + 1.
+ */
+
+BigInt& BigInt::operator++(int rhs)
+{
+    uint8_t carry       = 1;
+    BigInt tmp          = *this;
+
+    for (uint64_t i = 0; i < data.size(); i++)
+    {
+        uint16_t inc    = (uint16_t)data[i] + carry;
+        data[i]         = inc & 0xFF;
+        carry           = inc >> 8;
+        
+        if (!carry)
+            break;
+    }
+
+    if (carry)
+    {
+        data.push_back(1);
+        nBits++;
+    }
+
+    return tmp;
+}
+
+/**
+ * BigInt::operator-- - Decrement this int by 1.
+ *
+ * @return This int - 1.
+ */
+
+BigInt& BigInt::operator--(int rhs)
+{
+    BigInt tmp = *this;
+
+    for (uint64_t i = 0; i < data.size(); i++)
+    {
+        if (data[i] == 0)
+        {
+            data[i] = 0xFF;
+        }
+        else
+        {
+            data[i]--;
+            break;
+        }
+    }
+
+    if (data[data.size() - 1] == 0)
+    {
+        data.resize(data.size() - 1);
+        nBits--;
+    }
+
+    return tmp;
+}
+
+/**
+ * BigInt::Sqrt - Get the square root of this int N using a binary search. 
+ * The squareroot s is the smallest int such that s * s <= N. 
  *
  * @return BigInt s such that s * s <= N.
  */
 
-BigInt BigInt::Sqrt()
+BigInt BigInt::Sqrt() const
 {
     BigInt out;
+    string lo   = string("1") + string('0', (nBits - 1) / 2);
+    string hi   = string("1") + string('0', nBits / 2);
+
+    BigInt l(lo, 2);
+    BigInt tmp  = l;
+    tmp         *= l;
+
+    if (tmp == *this)
+    {
+        out = tmp;
+        return out;
+    }
+
+    BigInt h(hi, 2);
+    tmp = h;
+    tmp *= h;
+
+    if (tmp == *this)
+    {
+        out = tmp;
+        return out;
+    }
+
+    while (1)
+    {
+        BigInt m    = l + h;
+        m           /= 2;
+        tmp         = m;
+        tmp         *= m;
+
+        if (tmp == *this)
+        {
+            out = tmp;
+            break;
+        }
+
+        if (tmp > *this)
+            h = tmp;
+        else
+            l = tmp;
+    }
 
     return out;
 }
@@ -1179,7 +1504,7 @@ static string ReverseString(const string& in)
  *
  * @param u1    [in]        First addend string.
  * @param u2    [in]        Second addend string.
- * @param sum   [in/out]    Output sum as a byte array.
+ * @param out   [in/out]    Output sum as a byte array.
  */
 
 static void AddBinaryStrings(const string& u1, const string& u2, vector<uint8_t>& out)
@@ -1228,12 +1553,46 @@ static void AddBinaryStrings(const string& u1, const string& u2, vector<uint8_t>
 }
 
 /**
+ * AddBinaryStrings - Add two binary strings and store sum in an
+ * output string.
+ *
+ * @param u1    [in]        First addend string.
+ * @param u2    [in]        Second addend string.
+ * @param out   [in/out]    Output sum as string.
+ */
+
+static void AddBinaryStrings(const string& u1, const string& u2, string& out)
+{
+    const uint64_t maxLen   = max(u1.length(), u2.length());
+    const uint64_t l1       = u1.length();
+    const uint64_t l2       = u2.length();
+    uint8_t carry           = 0;
+
+    const string u1Rev      = ReverseString(u1);
+    const string u2Rev      = ReverseString(u2);
+
+    for (uint64_t i = 0; i < maxLen; i++)
+    {
+        uint8_t d1  = (i < l1) ? (u1Rev[i] - '0') : 0;
+        uint8_t d2  = (i < l2) ? (u2Rev[i] - '0') : 0;
+
+        uint8_t dig = d1 ^ d2 ^ carry;
+        carry       = (d1 & d2) | (carry & (d1 ^ d2));
+
+        out.insert(out.begin(), dig + '0');
+    }
+
+    if (carry)
+        out.insert(out.begin(), '1');
+}
+
+/**
  * SubtractBinaryStrings - Subtract two binary strings and store sum in an output byte
  * array.
  *
  * @param u1        [in] Integer to be subtracted from.
  * @param u2        [in] Integer to subtract.
- * @param out       [in/out] Output outerence as a byte array.
+ * @param out       [in/out] Output difference as a byte array.
  */
 
 static void SubtractBinaryStrings(const string& u1, const string& u2, vector<uint8_t>& out)
@@ -1302,4 +1661,49 @@ static void SubtractBinaryStrings(const string& u1, const string& u2, vector<uin
         out.push_back(diff);
         diff = 0;
     }
+}
+
+/**
+ * MultiplyBinaryStrings - Multiply two binary strings and store product in an output byte
+ * array.
+ *
+ * @param u1        [in] First integer to multiply.
+ * @param u2        [in] Second integer to multiply.
+ * @param prod      [in/out] Output product as a byte array.
+ */
+
+static void MultiplyBinaryStrings(const string& u1, const string& u2, string& prod)
+{
+    string sum = "0";
+
+    for (uint64_t i = u1.length(); i-- > 0;)
+    {
+        string out;
+
+        if ((u1[i] - '0'))
+        {
+            string tmp = u2 + string(u1.length() - i - 1, '0');
+            AddBinaryStrings(sum, tmp, out);
+            sum = out;
+        }
+    }
+
+    prod = sum;
+}
+
+/**
+ * IsSquareBigInt - Check if a big integer is a perfect square.
+ *
+ * @param i        [in] Int to check for squareness.
+ * 
+ * @return          True if the input is square, false otherwise.
+ */
+
+bool IsSquareBigInt(const BigInt& i)
+{
+    BigInt root = i.Sqrt();
+    if (root * root == i)
+        return true;
+
+    return false;
 }

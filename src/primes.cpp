@@ -102,3 +102,36 @@ void FactorSemiPrimeNearestSquares64(const uint64_t n, uint64_t& p1, uint64_t& p
         root++;
     }
 }
+
+/**
+ * FactorSemiPrimeNearestSquaresBigInt - Factor an input semiprime N using the nearest squares method.
+ * Find candidate solutions x = -b +- sqrt(b^2 + N) for some b to be determined. First,
+ * find square numbers A > N such that N - A is a square number b^2, then use b to find
+ * prime factors x via the above formula. Use arbitrary integers.
+ *
+ * @param n     [in] Input value to be factored.
+ * @param p1    [in/out] First prime divisor of n, if found, zero otherwise. Assumed zero on input.
+ * @param p1    [in/out] Second prime divisor of n, if found, zero otherwise. Assumed zero on input.
+ */
+
+void FactorSemiPrimeNearestSquaresBigInt(BigInt &n, BigInt& p1, BigInt& p2)
+{
+    BigInt root = n.Sqrt();
+    root++;
+
+    while (1)
+    {
+        BigInt diff = root * root - n;
+
+        if (IsSquareBigInt(diff))
+        {
+            BigInt b    = diff.Sqrt();
+            p1          = (b * b + n).Sqrt() - b;
+            p2          = n / p1;
+
+            return;
+        }
+
+        root++;
+    }
+}

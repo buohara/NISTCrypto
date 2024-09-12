@@ -26,7 +26,7 @@ int main(int argc, char** argv)
     res = TestCmpLShiftBigIntCorrect();
     assert(res.code == PASS);
 
-    //res = TestCmpRShiftBigIntCorrect();
+    res = TestCmpRShiftBigIntCorrect();
     assert(res.code == PASS);
 
     res = TestCmpAddBigIntCorrect();

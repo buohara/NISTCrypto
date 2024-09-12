@@ -15,6 +15,7 @@ TestResult TestCmpAddBigIntCorrect();
 TestResult TestCmpSubBigIntCorrect();
 TestResult TestCmpMulBigIntCorrect();
 TestResult TestCmpDivBigIntCorrect();
+TestResult TestSqrtCorrect();
 
 struct BigInt
 {
@@ -38,11 +39,21 @@ struct BigInt
     BigInt& operator<<=(uint64_t shift);
     BigInt& operator>>=(uint64_t shift);
     BigInt& operator+=(const BigInt& rhs);
+    BigInt operator+(const BigInt& rhs) const;
     BigInt& operator-=(const BigInt& rhs);
+    BigInt operator-(const BigInt& rhs) const;
     BigInt& operator*=(const BigInt& rhs);
+    BigInt operator*(const BigInt& rhs) const;
+    BigInt& operator*=(const uint8_t rhs);
+    BigInt operator*(const uint8_t rhs) const;
     BigInt& operator/=(const BigInt& rhs);
+    BigInt& operator/=(const uint8_t rhs);
+    BigInt operator/(const BigInt& rhs) const;
+    BigInt& operator++(int rhs);
+    BigInt& operator--(int rhs);
 
-    BigInt Sqrt();
+    BigInt Sqrt() const;
 };
 
 void BigIntRand(uint64_t nBits, BigInt& bigInt);
+bool IsSquareBigInt(const BigInt& i);
