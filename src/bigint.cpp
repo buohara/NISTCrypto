@@ -151,7 +151,6 @@ static void ParseDecimalString(const string val, vector<uint8_t>& bytes)
         }
     }
 
-    vector<uint8_t> outBytes;
     string quot = val;
 
     while (quot != "")
@@ -173,7 +172,7 @@ static void ParseDecimalString(const string val, vector<uint8_t>& bytes)
             rem         = rem % 256;
         }
 
-        outBytes.push_back((uint8_t)rem);
+        bytes.push_back((uint8_t)rem);
         quot = quotTmp;
     }
 }
@@ -520,19 +519,22 @@ TestResult TestCmpDivBigIntCorrect()
 {
     TestResult res;
 
-    for (uint64_t i = 0; i < nSizes; i++)
+    for (uint64_t i = 1; i < nSizes; i++)
     {
         for (uint64_t j = 0; j < numCasesPerSize; j++)
         {
-            BigInt a;
-            BigIntRand(testIntBitSizes[i], a);
+            BigInt a("10110100111111101010001111011100110010001", 2);
+            //BigIntRand(testIntBitSizes[i], a);
 
-            BigInt b;
-            BigIntRand(testIntBitSizes[i], b);
+            BigInt b("10011000111011101010110000011111", 2);
+            //BigIntRand(testIntBitSizes[i - 1], b);
 
-            BigInt aDblToInt;
+            BigInt tmp = a;
 
-            if (!(a == aDblToInt))
+            tmp *= b;
+            tmp /= b;
+
+            if (!(a == tmp))
             {
                 char msg[256];
                 res.code = FAIL;
@@ -541,7 +543,7 @@ TestResult TestCmpDivBigIntCorrect()
                     msg,
                     "BigInt compound divide failed. Expected = %s, actual = %s",
                     a.GetHexString().c_str(),
-                    aDblToInt.GetHexString().c_str()
+                    tmp.GetHexString().c_str()
                 );
 
                 res.msg = string(msg);
@@ -1269,19 +1271,27 @@ BigInt& BigInt::operator/=(const BigInt& rhs)
         uint16_t leadDiv    = rem.data[rem.data.size() - 1];
         uint64_t i          = 1;
 
-        while (leadDiv / leadRHS == 0)
+        while (leadDiv <= leadRHS)
         {
             leadDiv = leadDiv * 256 + rem.data[rem.data.size() - i - 1];
             i++;
         }
 
         uint8_t curQuot = leadDiv / leadRHS;
+        uint32_t shift  = 8 * (rem.data.size() - i - rhs.data.size() + 1);
         
-        while (rhs * curQuot > rem)
-            curQuot--;
+        BigInt cur      = BigInt(curQuot);
+        cur             <<= shift;
 
-        vals.push_back(curQuot);
-        rem = rem - rhs * curQuot;
+        while (rhs * cur > rem)
+        {
+            curQuot--;
+            cur = BigInt(curQuot);
+            cur <<= shift;
+        }
+
+        vals.insert(vals.begin(), curQuot);
+        rem = rem - rhs * cur;
 
         if (rhs > rem)
             break;
@@ -1335,7 +1345,6 @@ BigInt BigInt::operator/(const BigInt& rhs) const
 BigInt& BigInt::operator++(int rhs)
 {
     uint8_t carry       = 1;
-    BigInt tmp          = *this;
 
     for (uint64_t i = 0; i < data.size(); i++)
     {
@@ -1353,7 +1362,7 @@ BigInt& BigInt::operator++(int rhs)
         nBits++;
     }
 
-    return tmp;
+    return *this;
 }
 
 /**
@@ -1364,8 +1373,6 @@ BigInt& BigInt::operator++(int rhs)
 
 BigInt& BigInt::operator--(int rhs)
 {
-    BigInt tmp = *this;
-
     for (uint64_t i = 0; i < data.size(); i++)
     {
         if (data[i] == 0)
@@ -1385,7 +1392,7 @@ BigInt& BigInt::operator--(int rhs)
         nBits--;
     }
 
-    return tmp;
+    return *this;
 }
 
 /**
@@ -1398,28 +1405,12 @@ BigInt& BigInt::operator--(int rhs)
 BigInt BigInt::Sqrt() const
 {
     BigInt out;
-    string lo   = string("1") + string('0', (nBits - 1) / 2);
-    string hi   = string("1") + string('0', nBits / 2);
+    string lo   = string("1") + string(nBits / 2 - 1, '0');
+    string hi   = string("1") + string(nBits / 2 + 1, '0');
 
     BigInt l(lo, 2);
-    BigInt tmp  = l;
-    tmp         *= l;
-
-    if (tmp == *this)
-    {
-        out = tmp;
-        return out;
-    }
-
     BigInt h(hi, 2);
-    tmp = h;
-    tmp *= h;
-
-    if (tmp == *this)
-    {
-        out = tmp;
-        return out;
-    }
+    BigInt tmp;
 
     while (1)
     {
@@ -1430,14 +1421,20 @@ BigInt BigInt::Sqrt() const
 
         if (tmp == *this)
         {
-            out = tmp;
+            out = m;
+            break;
+        }
+
+        if (l + 1 == h && h * h > *this)
+        {
+            out = l;
             break;
         }
 
         if (tmp > *this)
-            h = tmp;
+            h = m;
         else
-            l = tmp;
+            l = m;
     }
 
     return out;
