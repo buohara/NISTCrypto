@@ -137,12 +137,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\bigint.cpp" />
+    <ClCompile Include="src\diff.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\primes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\bigint.h" />
     <ClInclude Include="inc\commoninc.h" />
+    <ClInclude Include="inc\diff.h" />
     <ClInclude Include="inc\primes.h" />
     <ClInclude Include="inc\test.h" />
   </ItemGroup>

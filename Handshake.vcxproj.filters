@@ -10,6 +10,9 @@
     <ClCompile Include="src\primes.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\diff.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\bigint.h">
@@ -22,6 +25,9 @@
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="inc\test.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\diff.h">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>
