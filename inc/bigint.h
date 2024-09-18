@@ -6,17 +6,6 @@ using namespace std;
 
 #define BYTES(x) (((x) / 8) + ((x) % 8 ? 1 : 0))
 
-#include "test.h"
-
-TestResult TestAssignBigInt();
-TestResult TestCmpLShiftBigIntCorrect();
-TestResult TestCmpRShiftBigIntCorrect();
-TestResult TestCmpAddBigIntCorrect();
-TestResult TestCmpSubBigIntCorrect();
-TestResult TestCmpMulBigIntCorrect();
-TestResult TestCmpDivBigIntCorrect();
-TestResult TestSqrtCorrect();
-
 struct BigInt
 {
     vector<uint8_t> data;

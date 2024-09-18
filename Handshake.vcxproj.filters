@@ -1,33 +1,27 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="src\bigint.cpp">
+    <ClCompile Include="src\handshakemain.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\main.cpp">
+    <ClCompile Include="src\db.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\primes.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\diff.cpp">
+    <ClCompile Include="src\contract.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="inc\bigint.h">
-      <Filter>inc</Filter>
-    </ClInclude>
     <ClInclude Include="inc\commoninc.h">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="inc\primes.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\test.h">
-      <Filter>inc</Filter>
-    </ClInclude>
     <ClInclude Include="inc\diff.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\db.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\contract.h">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>

@@ -57,6 +57,6 @@ struct Table
     void WriteHeader(FILE* pFile, const bool bCompress);
     void ReadHeader(FILE* pFile);
 
-    void LoadFromFile(string fileName);
-    void StoreToFile(string fileName, bool bCompressed);
+    void LoadFromFile(const string fileName);
+    void StoreToFile(const string fileName, const bool bCompress);
 };
