@@ -139,7 +139,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\bigint.cpp" />
-    <ClCompile Include="src\cryptmain.cpp" />
     <ClCompile Include="src\diff.cpp" />
     <ClCompile Include="src\encrypt.cpp" />
     <ClCompile Include="src\hash.cpp" />
