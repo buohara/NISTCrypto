@@ -60,11 +60,13 @@ struct SHA3
     void ApplyKeccak();
     void SpongeSqueezeBlock();
 
-    void Theta(vector<uint8_t> &block);
-    void Rho(vector<uint8_t> &block);
-    void Pi(vector<uint8_t> &block);
-    void Chi(vector<uint8_t> &block);
-    void Iota(vector<uint8_t> &block);
+    void Theta();
+    void Rho();
+    void Pi();
+    void Chi();
+    void Iota();
 
     void Hash(vector<uint8_t>& data, vector<uint8_t> &hashOut);
+    uint8_t GetIdx(uint64_t x, uint64_t y, uint64_t z);
+    void SetIdx(uint64_t x, uint64_t y, uint64_t z, uint8_t val);
 };

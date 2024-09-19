@@ -248,6 +248,23 @@ void RunTests(TestArgs& args)
 
 int main(int argc, char** argv)
 {
+    uint64_t vals[3] = { 1, 0, 0 };
+
+    for (int64_t t = 0; t < 24; t++)
+    {
+        int64_t t0  = vals[1];
+        int64_t t1  = (2 * vals[0] + 3 * vals[1]) % 5;
+        int64_t t2  = ((t + 1) * (t + 2)) / 2;
+
+        printf("[%lld %lld %lld]\n", vals[0], vals[1], t2);
+
+        vals[0]     = t0;
+        vals[1]     = t1;
+        vals[2]     = t2;
+    }
+
+    return 0;
+
     vector<string> args(argv + 1, argv + argc);
     TestArgs argsOut;
 
