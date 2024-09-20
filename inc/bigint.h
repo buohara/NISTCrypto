@@ -1,10 +1,9 @@
 #pragma once
 
 #include "commoninc.h"
+#include "utils.h"
 
 using namespace std;
-
-#define BYTES(x) (((x) / 8) + ((x) % 8 ? 1 : 0))
 
 struct BigInt
 {

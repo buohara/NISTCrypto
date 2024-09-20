@@ -38,7 +38,7 @@ uint8_t SHA3::GetIdx(uint64_t x, uint64_t y, uint64_t z)
 
 void SHA3::SetIdx(uint64_t x, uint64_t y, uint64_t z, uint8_t val)
 {
-    if (val != 0 || val != 1)
+    if (!(val == 0 || val == 1))
         throw invalid_argument("Expected 0 or 1 input when setting SHA3 data");
 
     uint64_t idx    = params.w * (5 * y + x) + z;
@@ -46,6 +46,32 @@ void SHA3::SetIdx(uint64_t x, uint64_t y, uint64_t z, uint8_t val)
     uint64_t shift  = idx % 8;
 
     state[byte] |= (val << shift);
+}
+
+/**
+ * SHA3::SetIdx - Set a value in a user-provided array. Array
+ * assumed to match state array size on input.
+ *
+ * @param arrayIn   [in/out]    Set value into this array.
+ * @param x         [in]        x coord.
+ * @param y         [in]        y coord.
+ * @param z         [in]        z coord.
+ * @param val       [in]        Value to set.
+ */
+
+void SHA3::SetIdx(vector<uint8_t> &arrayIn, uint64_t x, uint64_t y, uint64_t z, uint8_t val)
+{
+    if (!(val == 0 || val == 1))
+        throw invalid_argument("Expected 0 or 1 input when setting SHA3 data");
+
+    if (arrayIn.size() != state.size())
+        throw invalid_argument("Unexpected input array size when setting x, y, z val.");
+
+    uint64_t idx    = params.w * (5 * y + x) + z;
+    uint64_t byte   = idx / 8;
+    uint64_t shift  = idx % 8;
+
+    arrayIn[byte] |= (val << shift);
 }
 
 /**
@@ -116,8 +142,6 @@ bool MsgStreamer::End()
  * SHA3::SHA3 - Constructor. Params will be initialized to Keccak[1600] with
  * d = 512, r = 576, c = 1024, w = 64, and n = 24. Iniitialize the state
  * array size to 5 x 5 x 64 bits by default.
- *
- * @param dataIn    [in]
  */
 
 SHA3::SHA3()
@@ -129,7 +153,7 @@ SHA3::SHA3()
  * SHA3::SHA3 - Constructor. Take user-specified SHA3 params and initialize
  * the state array accordingly.
  *
- * @param paramsIn    [in]
+ * @param paramsIn    [in] List if SHA3 hashing parameters.
  */
 
 SHA3::SHA3(SHA3Params& paramsIn) : params(paramsIn), stream(params.r, params.b)
@@ -196,8 +220,6 @@ void SHA3::SpongeSqueezeBlock()
 
 /**
  * SHA3::Theta - Theta step transformtion for SHA3.
- *
- * @param block    [in] Input block to scramble.
  */
 
 void SHA3::Theta()
@@ -230,8 +252,6 @@ void SHA3::Theta()
 
 /**
  * SHA3::Rho - Rho step transformtion for SHA3.
- *
- * @param block    [in] Input block to scramble.
  */
 
 void SHA3::Rho()
@@ -279,8 +299,6 @@ void SHA3::Rho()
 
 /**
  * SHA3::Pi - Pi step transformtion for SHA3.
- *
- * @param block    [in] Input block to scramble.
  */
 
 void SHA3::Pi()
@@ -293,20 +311,8 @@ void SHA3::Pi()
         {
             for (uint64_t z = 0; z < params.w; z++)
             {
-                uint64_t idxIn      = STATE_IDX(x, y, z, params.w);
-                uint64_t byteIn     = idxIn / 8;
-                uint64_t shiftIn    = idxIn % 8;
-                uint8_t maskIn      = (1 << shiftIn);
-
-                uint64_t idxOut     = STATE_IDX((x + 3 * y) % STATE_W, x, z, params.w);
-                uint64_t byteOut    = idxIn / 8;
-                uint64_t shiftOut   = idxIn % 8;
-                uint8_t maskOut     = (1 << shiftOut);
-
-                if (shiftIn > shiftOut)
-                    tmp[byteOut] |= ((state[byteIn] & maskIn) << (shiftOut - shiftIn));
-                else
-                    tmp[byteOut] |= ((state[byteIn] & maskIn) >> (shiftIn - shiftOut));
+                uint8_t in = GetIdx(x, y, z);
+                SetIdx((x + 3 * y) % STATE_W, x, z, in);
             }
         }
     }
@@ -316,8 +322,6 @@ void SHA3::Pi()
 
 /**
  * SHA3::Chi - Chi step transformtion for SHA3.
- *
- * @param block    [in] Input block to scramble.
  */
 
 void SHA3::Chi()
@@ -330,21 +334,14 @@ void SHA3::Chi()
         {
             for (uint64_t z = 0; z < params.w; z++)
             {
-                uint64_t idx1       = STATE_IDX(x, y, z, params.w);
-                uint64_t byte1      = idx1 / 8;
-                uint64_t shift1     = idx1 % 8;
-                uint8_t mask1       = (1 << shift1);
-                uint8_t a1;
+                uint8_t a1 = GetIdx(x, y, z);
+                uint8_t a2 = GetIdx((x + 1) % STATE_W, y, z);
+                uint8_t a3 = GetIdx((x + 2) % STATE_W, y, z));
 
-                uint64_t idx2       = STATE_IDX((x + 1) % STATE_W, y, z, params.w);
-                uint64_t byte2      = idx2 / 8;
-                uint64_t shift2     = idx2 % 8;
-                uint8_t mask2       = (1 << shift2);
+                a1 ^= a2;
+                a1 *= a3;
 
-                uint64_t idx3       = STATE_IDX((x + 2) % STATE_W, y, z, params.w);
-                uint64_t byte3      = idx3 / 8;
-                uint64_t shift3     = idx3 % 8;
-                uint8_t mask3       = (1 << shift3);
+                SetIdx(tmp, x, y, z, a1);
             }
         }
     }
@@ -353,14 +350,55 @@ void SHA3::Chi()
 }
 
 /**
- * SHA3::Iota - Iota step transformtion for SHA3.
+ * RC - Round constant (RC) function used in Iota step transformation.
  *
- * @param block    [in] Input block to scramble.
+ * @param t    [in] Input parameter for RC.
+ * 
+ * @return RC(t).
  */
 
-void SHA3::Iota()
+static uint8_t RC(const uint64_t t)
 {
+    if (!(t % 255))
+        return 1;
 
+    vector<uint8_t> r = { 1, 0, 0, 0, 0, 0, 0, 0 };
+
+    for (uint64_t i = 0; i < t % 255; i++)
+    {
+        r.insert(r.begin(), 0);
+        
+        r[0] = r[0] ^ r[8];
+        r[4] = r[4] ^ r[8];
+        r[5] = r[5] ^ r[8];
+        r[6] = r[6] ^ r[8];
+        
+        r.resize(8);
+    }
+
+    return r[0];
+}
+
+/**
+ * SHA3::Iota - Iota step transformtion for SHA3.
+ *
+ * @param round    [in] Round number needed in this step transformation.
+ */
+
+void SHA3::Iota(uint64_t round)
+{
+    vector<uint8_t> rcs(params.w, 0);
+    const uint8_t indices[7] = { 0, 1, 3, 7, 15, 31, 63 };
+
+    for (uint64_t j = 0; j < params.l; j++)
+        rcs[indices[j]] = RC(j + 7 * round);
+
+    for (uint64_t z = 0; z < params.w; z++)
+    {
+        uint8_t a = GetIdx(0, 0, z);
+        a ^= rcs[z];
+        SetIdx(0, 0, z, a);
+    }
 }
 
 /**

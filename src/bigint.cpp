@@ -6,68 +6,6 @@ static void SubtractBinaryStrings(const string& u1, const string& u2, vector<uin
 static void MultiplyBinaryStrings(const string& u1, const string& u2, string& prod);
 
 /**
- * ParseHexString - Convert an integer represented as a hex string to a
- * binary integer stored as an array of bytes.
- *
- * @param val       [in] String val to convert to an integer.
- * @param bytes     [in/out] Array of bytes to populate with binary representation of integer.
- */
-
-static void ParseHexString(const string val, vector<uint8_t>& bytes)
-{
-    if (bytes.size() != 0)
-        throw invalid_argument("Expected input byte array to be empty when parsing BigInt hex string.");
-
-    map<char, uint8_t> hexCharVals =
-    {
-        { '0', 0x0 },
-        { '1', 0x1 },
-        { '2', 0x2 },
-        { '3', 0x3 },
-        { '4', 0x4 },
-        { '5', 0x5 },
-        { '6', 0x6 },
-        { '7', 0x7 },
-        { '8', 0x8 },
-        { '9', 0x9 },
-        { 'A', 0xA },
-        { 'B', 0xB },
-        { 'C', 0xC },
-        { 'D', 0xD },
-        { 'E', 0xE },
-        { 'F', 0xF },
-        { 'a', 0xA },
-        { 'b', 0xB },
-        { 'c', 0xC },
-        { 'd', 0xD },
-        { 'e', 0xE },
-        { 'f', 0xF }
-    };
-
-    for (uint64_t i = 0; i < val.length(); i++)
-    {
-        if (hexCharVals.count(val[i]) == 0)
-        {
-            throw invalid_argument("BigInt constructor encountered unexpected hex digit in input string %s");
-            bytes.push_back(0);
-            return;
-        }
-    }
-
-    bytes.resize(BYTES(val.length() * 4));
-    string valRev = val;
-
-    for (uint64_t i = 0; i < val.length(); i++)
-        valRev[i] = val[val.length() - i - 1];
-
-    for (uint64_t i = 0; i < val.length(); i++)
-    {
-        uint64_t byteOut    = i / 2;
-        bytes[byteOut]      |= (hexCharVals[val[i]] << 4 * (i % 2));
-    }
-}
-
-/**
  * ParseBinaryString - Convert an integer represented as a binary string to a
  * binary integer stored as an array of bytes.
  *
