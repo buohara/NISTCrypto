@@ -1,14 +1,14 @@
 #include "test.h"
 #include "hash.h"
 
-static enum SHA3_TEST_MODE
+enum SHA3_TEST_MODE
 {
     MSG,
     MONTE,
-    UNKNOWN
+    NUM_MODES
 };
 
-static struct SHA3TestVecs
+struct SHA3TestVecs
 {
     SHA3_TEST_MODE mode;
 
@@ -60,7 +60,7 @@ void LoadTestVecsFromFile(const string file, SHA3TestVecs &vecs)
             vecs.mode = MSG;
             vector<uint8_t> msg;
 
-            ParseHexString(match[0], msg);
+            StringToHexArray(match[1], msg);
             vecs.msgs.push_back(msg);
             continue;
         }
@@ -69,7 +69,7 @@ void LoadTestVecsFromFile(const string file, SHA3TestVecs &vecs)
         {
             vector<uint8_t> md;
 
-            ParseHexString(match[0], md);
+            StringToHexArray(match[1], md);
             vecs.hashes.push_back(md);
             continue;
         }
@@ -79,7 +79,7 @@ void LoadTestVecsFromFile(const string file, SHA3TestVecs &vecs)
             vecs.mode = MONTE;
             vector<uint8_t> seed;
 
-            ParseHexString(match[0], seed);
+            StringToHexArray(match[1], seed);
             vecs.msgs.push_back(seed);
             continue;
         }
@@ -120,10 +120,10 @@ TestResult TestSHA3512Long()
             char msg[256];
 
             string hashOutStr;
-            HexToString(hashOut, hashOutStr);
+            HexArrayToString(hashOut, hashOutStr);
 
             string hashExpStr;
-            HexToString(vecs.hashes[i], hashExpStr);
+            HexArrayToString(vecs.hashes[i], hashExpStr);
 
             sprintf(
                 msg,
@@ -169,10 +169,10 @@ TestResult TestSHA3512Short()
             char msg[256];
 
             string hashOutStr;
-            HexToString(hashOut, hashOutStr);
+            HexArrayToString(hashOut, hashOutStr);
 
             string hashExpStr;
-            HexToString(vecs.hashes[i], hashExpStr);
+            HexArrayToString(vecs.hashes[i], hashExpStr);
 
             sprintf(
                 msg,
@@ -220,10 +220,10 @@ TestResult TestSHA3512Monte()
             char msg[256];
 
             string hashOutStr;
-            HexToString(hashOut, hashOutStr);
+            HexArrayToString(hashOut, hashOutStr);
 
             string hashExpStr;
-            HexToString(vecs.hashes[i], hashExpStr);
+            HexArrayToString(vecs.hashes[i], hashExpStr);
 
             sprintf(
                 msg,

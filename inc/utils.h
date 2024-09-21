@@ -6,5 +6,5 @@ using namespace std;
 
 #define BYTES(x) (((x) / 8) + ((x) % 8 ? 1 : 0))
 
-void ParseHexString(const string val, vector<uint8_t>& bytes);
-void HexToString(const vector<uint8_t>& bytes, string &out);
+void StringToHexArray(const string val, vector<uint8_t>& bytes);
+void HexArrayToString(const vector<uint8_t>& bytes, string &out);

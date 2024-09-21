@@ -1,14 +1,14 @@
 #include "utils.h"
 
 /**
- * ParseHexString - Convert an integer represented as a hex string to a
+ * StringToHexArray - Convert an integer represented as a hex string to a
  * binary integer stored as an array of bytes.
  *
  * @param val       [in] String val to convert to an integer.
  * @param bytes     [in/out] Array of bytes to populate with binary representation of integer.
  */
 
-void ParseHexString(const string val, vector<uint8_t>& bytes)
+void StringToHexArray(const string val, vector<uint8_t>& bytes)
 {
     if (bytes.size() != 0)
         throw invalid_argument("Expected input byte array to be empty when parsing BigInt hex string.");
@@ -39,37 +39,36 @@ void ParseHexString(const string val, vector<uint8_t>& bytes)
         { 'f', 0xF }
     };
 
-    for (uint64_t i = 0; i < val.length(); i++)
+    const uint64_t l        = val.length();
+    const uint64_t sizeOut  = (l + 1) / 2;
+    bytes.resize(sizeOut);
+    bool bHi                = false;
+    const uint8_t bOdd      = l % 2;
+
+    for (uint64_t i = l; i-- > 0;)
     {
         if (hexCharVals.count(val[i]) == 0)
         {
             throw invalid_argument("Encountered unexpected hex character converting hex string to byte array.");
-            bytes.push_back(0);
+            bytes.resize(0);
             return;
         }
-    }
 
-    bytes.resize(BYTES(val.length() * 4));
-    string valRev = val;
-
-    for (uint64_t i = 0; i < val.length(); i++)
-        valRev[i] = val[val.length() - i - 1];
-
-    for (uint64_t i = 0; i < val.length(); i++)
-    {
-        uint64_t byteOut = i / 2;
-        bytes[byteOut] |= (hexCharVals[val[i]] << 4 * (i % 2));
+        uint64_t outPlace   = (i + bOdd) / 2;
+        uint64_t outIdx     = sizeOut - outPlace - 1;
+        bytes[outIdx]       |= (bHi) ? hexCharVals[val[i]] << 4 : hexCharVals[val[i]];
+        bHi                 = !bHi;
     }
 }
 
 /**
- * HexToString - Convert a hex array to its string equivalent.
+ * HexArrayToString - Convert a hex array to its string equivalent.
  *
  * @param bytes     [in]        Byte array to convert to string.
  * @param out       [in/out]    Output string to fill. Assumed empty on input.
  */
 
-void HexToString(const vector<uint8_t>& bytes, string& out)
+void HexArrayToString(const vector<uint8_t>& bytes, string& out)
 {
     if (out.size() != 0)
         throw invalid_argument("Expected output to be empty when converting hex to string.");
@@ -95,5 +94,5 @@ void HexToString(const vector<uint8_t>& bytes, string& out)
     };
 
     for (uint64_t i = 0; i < bytes.size(); i++)
-        out = out + hexCharVals[bytes[i]];
+        out = hexCharVals[bytes[i]] + out;
 }

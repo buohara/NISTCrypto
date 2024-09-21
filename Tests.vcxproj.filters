@@ -16,13 +16,16 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="test\biginttest.cpp">
+    <ClCompile Include="test\testbigint.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="testmain.cpp">
+    <ClCompile Include="test\testdiff.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\testdiff.cpp">
+    <ClCompile Include="test\testmain.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="testsha3.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

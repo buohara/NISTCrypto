@@ -4,10 +4,19 @@
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
 
+typedef pair<string, string> TestGroupDesc;
+typedef pair<string, pfnTestFunc> TestCase;
+typedef vector<TestCase> TestGroupCases;
+typedef pair<TestGroupDesc, TestGroupCases> TestGroup;
+typedef vector<TestGroup> TestGroupList;
+
+static bool gbLogToFile         = false;
+static string gLogFilePath      = "";
+static FILE *gpLogFile          = nullptr;
+
 struct TestArgs
 {
     vector<uint64_t> testIDs;
-    string logFile;
 };
 
 map<ResultCode, string> ResultCodeStrings =
@@ -17,7 +26,7 @@ map<ResultCode, string> ResultCodeStrings =
     { UNKNOWN, "UNKNOWN" }
 };
 
-vector<pair<pair<string, string>, vector<pair<string, pfnTestFunc>>>> testGroups =
+TestGroupList testGroups =
 {
     {
         { "BigInt", "Arbitrary size integer unit tests." },
@@ -51,7 +60,7 @@ vector<pair<pair<string, string>, vector<pair<string, pfnTestFunc>>>> testGroups
     },
 
     {
-        { "Comopress", "Compression algorithm unit tests." },
+        { "Compress", "Compression algorithm unit tests." },
         {
         }
     },
@@ -164,10 +173,59 @@ void ParseCommandLine(vector<string> &args, TestArgs &argsOut)
         if (args[i] == "-o")
         {
             i++;
-            string logFile = args[i];
+            gbLogToFile     = true;
+            gLogFilePath    = args[i];
             continue;
         }
     }
+}
+
+/**
+ * InitLogFile - If a log file path was specified on the command line,
+ * try opening it here.
+ */
+
+static void InitLogFile()
+{
+    if (gbLogToFile)
+    {
+        gpLogFile = fopen(gLogFilePath.c_str(), "w");
+
+        if (gpLogFile == nullptr)
+        {
+            throw invalid_argument("Failed to write Handshake test log file " + gLogFilePath);
+            gbLogToFile = false;
+        }
+    }
+}
+
+/**
+ * LogResult - Logging helper. Print messages to a log file or console
+ * depending on log file config.
+ *
+ * @param format        [in]  Log message format.
+ * @param args (...)    [in]  Variadic argument list.
+ */
+
+static void LogResult(const char* format, ...)
+{
+    const uint64_t bufSize = 512;
+    char msgBuf[bufSize];
+
+    va_list args;
+    va_start(args, format);
+
+    if (gbLogToFile)
+    {
+        sprintf(msgBuf, format, args);
+        fwrite(string(msgBuf).c_str(), sizeof(char), bufSize, gpLogFile);
+    }
+    {
+        printf(format, args);
+    }
+
+    va_end(args);
+
 }
 
 /**
@@ -181,35 +239,20 @@ void ParseCommandLine(vector<string> &args, TestArgs &argsOut)
 
 void RunTests(TestArgs& args)
 {
-    bool bResultsToLog      = false;
-    FILE* pFile;
-    const uint64_t bufSize  = 512;
-
-    pFile = fopen(args.logFile.c_str(), "w");
-
-    if (pFile == nullptr)
-        throw invalid_argument("Failed to write Handshake test log file " + args.logFile);
-    else
-        bResultsToLog = true;
+    InitLogFile();
 
     for (uint64_t i = 0; i < args.testIDs.size(); i++)
     {
+        uint64_t groupID        = args.testIDs[i] - 1;
+        string groupName        = testGroups[groupID].first.first;
+        TestGroupCases& cases   = testGroups[groupID].second;
+
         if (args.testIDs[i] > testGroups.size())
             throw invalid_argument("Invalid test group ID encountered running Handshake tests.");
 
-        if (bResultsToLog)
+        for (uint64_t j = 0; j < cases.size(); j++)
         {
-            char msgBuf[bufSize];
-            sprintf(msgBuf, "Beginning %s test group.\n", testGroups[i].first.first.c_str());
-            fwrite(msgBuf, sizeof(char), bufSize, pFile);
-        }
-        {
-            printf("Beginning %s test group.\n", testGroups[i].first.first.c_str());
-        }
-
-        for (uint64_t j = 0; j < testGroups[i].second.size(); j++)
-        {
-            pfnTestFunc pfnTest = testGroups[i].second[j].second;
+            pfnTestFunc pfnTest = cases[j].second;
 
             try
             {
@@ -217,24 +260,14 @@ void RunTests(TestArgs& args)
 
                 for (uint64_t k = 0; k < res.caseResults.size(); k++)
                 {
-                    if (bResultsToLog)
-                    {
-                        char msgBuf[bufSize];
-                        sprintf(msgBuf, "Case %llu %s %s\n", k, ResultCodeStrings[res.caseResults[k].first].c_str(),
-                            res.caseResults[k].second.c_str());
-
-                        fwrite(msgBuf, sizeof(char), bufSize, pFile);
-                    }
-                    else
-                    {
-                        printf("Case %llu %s %s\n", k, ResultCodeStrings[res.caseResults[k].first].c_str(),
-                            res.caseResults[k].second.c_str());
-                    }
+                    LogResult("Case %llu %s %s\n", ResultCodeStrings[res.caseResults[k].first].c_str(),
+                        res.caseResults[k].second.c_str());
                 }
             }
             catch (exception& e)
             {
-                
+                LogResult("Exception encountered in Handshake tests: '%s'. Continuing to next case.\n",
+                    e.what());
             }
         }
     }
@@ -251,23 +284,6 @@ void RunTests(TestArgs& args)
 
 int main(int argc, char** argv)
 {
-    uint64_t vals[3] = { 1, 0, 0 };
-
-    for (int64_t t = 0; t < 24; t++)
-    {
-        int64_t t0  = vals[1];
-        int64_t t1  = (2 * vals[0] + 3 * vals[1]) % 5;
-        int64_t t2  = ((t + 1) * (t + 2)) / 2;
-
-        printf("[%lld %lld %lld]\n", vals[0], vals[1], t2);
-
-        vals[0]     = t0;
-        vals[1]     = t1;
-        vals[2]     = t2;
-    }
-
-    return 0;
-
     vector<string> args(argv + 1, argv + argc);
     TestArgs argsOut;
 

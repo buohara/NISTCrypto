@@ -172,7 +172,7 @@ BigInt::BigInt(string val, uint64_t base)
         ParseDecimalString(val, outBytes);
 
     if (base == 16)
-        ParseHexString(val, outBytes);
+        StringToHexArray(val, outBytes);
 
     *this = BigInt(outBytes);
 }

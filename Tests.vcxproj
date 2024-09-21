@@ -146,9 +146,10 @@
     <ClInclude Include="inc\test.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\testdiff.cpp" />
-    <ClCompile Include="testmain.cpp" />
-    <ClCompile Include="test\biginttest.cpp" />
+    <ClCompile Include="testsha3.cpp" />
+    <ClCompile Include="test\testbigint.cpp" />
+    <ClCompile Include="test\testdiff.cpp" />
+    <ClCompile Include="test\testmain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="CryptUtils.vcxproj">

@@ -204,7 +204,7 @@ void SHA3::ApplyKeccak()
         Rho();
         Pi();
         Chi();
-        Iota();
+        Iota(params.n);
     }
 }
 
@@ -336,7 +336,7 @@ void SHA3::Chi()
             {
                 uint8_t a1 = GetIdx(x, y, z);
                 uint8_t a2 = GetIdx((x + 1) % STATE_W, y, z);
-                uint8_t a3 = GetIdx((x + 2) % STATE_W, y, z));
+                uint8_t a3 = GetIdx((x + 2) % STATE_W, y, z);
 
                 a1 ^= a2;
                 a1 *= a3;
