@@ -1,11 +1,7 @@
 #include "hash.h"
 
-#define STATE_IDX(x, y, z, w) ((w) * (5 * (y) + (x)) + (z))
-#define STATE_W 5
-#define STATE_H 5
-
 /**
- * SHA3::GetIdx - Get a value from the state array at specified
+ * SHA3::Get - Get a value from the state array at specified
  * x, y, z position.
  *
  * @param x    [in] x coord.
@@ -15,7 +11,7 @@
  * @return Value of state array at specified location.
  */
 
-uint8_t SHA3::GetIdx(uint64_t x, uint64_t y, uint64_t z)
+uint8_t SHA3::GetBit(uint64_t x, uint64_t y, uint64_t z)
 {
     uint64_t idx    = params.w * (5 * y + x) + z;
     uint64_t byte   = idx / 8;
@@ -27,7 +23,7 @@ uint8_t SHA3::GetIdx(uint64_t x, uint64_t y, uint64_t z)
 }
 
 /**
- * SHA3::SetIdx - Set a value in the state array at specified
+ * SHA3::Set - Set a value in the state array at specified
  * x, y, z position.
  *
  * @param x    [in] x coord.
@@ -36,7 +32,7 @@ uint8_t SHA3::GetIdx(uint64_t x, uint64_t y, uint64_t z)
  * @param val  [in] Value to set.
  */
 
-void SHA3::SetIdx(uint64_t x, uint64_t y, uint64_t z, uint8_t val)
+void SHA3::SetBit(uint64_t x, uint64_t y, uint64_t z, uint8_t val)
 {
     if (!(val == 0 || val == 1))
         throw invalid_argument("Expected 0 or 1 input when setting SHA3 data");
@@ -49,7 +45,7 @@ void SHA3::SetIdx(uint64_t x, uint64_t y, uint64_t z, uint8_t val)
 }
 
 /**
- * SHA3::SetIdx - Set a value in a user-provided array. Array
+ * SHA3::Set - Set a value in a user-provided array. Array
  * assumed to match state array size on input.
  *
  * @param arrayIn   [in/out]    Set value into this array.
@@ -59,7 +55,7 @@ void SHA3::SetIdx(uint64_t x, uint64_t y, uint64_t z, uint8_t val)
  * @param val       [in]        Value to set.
  */
 
-void SHA3::SetIdx(vector<uint8_t> &arrayIn, uint64_t x, uint64_t y, uint64_t z, uint8_t val)
+void SHA3::SetBit(vector<uint8_t> &arrayIn, uint64_t x, uint64_t y, uint64_t z, uint8_t val)
 {
     if (!(val == 0 || val == 1))
         throw invalid_argument("Expected 0 or 1 input when setting SHA3 data");
@@ -72,6 +68,145 @@ void SHA3::SetIdx(vector<uint8_t> &arrayIn, uint64_t x, uint64_t y, uint64_t z, 
     uint64_t shift  = idx % 8;
 
     arrayIn[byte] |= (val << shift);
+}
+
+/**
+ * SHA3::GetRow - Get row from state array at specified
+ * (y, z) position.
+ *
+ * @param y     [in]    Row y coord.
+ * @param z     [in]    Row z coord.
+ *
+ * @return  Bits in specified row.
+ */
+
+uint8_t SHA3::GetRow(const uint64_t y, const uint64_t z)
+{
+    if (y >= STATE_H || z >= params.w)
+        throw out_of_range("Specified (y,z) position out of range when accessing state array row.");
+
+    uint8_t out = 0;
+
+    for (uint64_t x = 0; x < STATE_W; x++)
+        out |= GetBit(x, y, z) << x;
+
+    return out;
+}
+
+/**
+ * SHA3::GetColumn - Get column from state array at specified
+ * (x, z) position.
+ *
+ * @param x     [in]    Column x coord.
+ * @param z     [in]    Column z coord.
+ */
+
+uint8_t SHA3::GetColumn(const uint64_t x, const uint64_t z)
+{
+    if (x >= STATE_W || z >= params.w)
+        throw out_of_range("Specified (x,y) position out of range when accessing state array column.");
+
+    uint8_t out = 0;
+
+    for (uint64_t y = 0; y < STATE_W; y++)
+        out |= GetBit(x, y, z) << y;
+
+    return out;
+}
+
+/**
+ * SHA3::GetLane - Get lane from state array at specified
+ * (x, y) position.
+ *
+ * @param x         [in]        x coord.
+ * @param y         [in]        y coord.
+ * @param laneOut   [in/out]    Output lane.
+ */
+
+void SHA3::GetLane(const uint64_t x, const uint64_t y, vector<uint8_t>& laneOut)
+{
+    if (x >= STATE_W || y >= STATE_H)
+        throw out_of_range("Specified (x,y) position out of range when accessing state array lane.");
+
+    laneOut.resize(params.w / 8, 0);
+
+    for (uint64_t z = 0; z < STATE_W; z++)
+    {
+        uint8_t byte    = z / 8;
+        uint8_t shift   = z % 8;
+
+        laneOut[byte] |= GetBit(x, y, z) << shift;
+    }
+}
+
+/**
+ * SHA3::SetRow - Set row values in the state array at specified
+ * (y, z) position.
+ *
+ * @param y         [in]        y coord.
+ * @param z         [in]        z coord.
+ * @param val       [in]        Value to set.
+ */
+
+void SHA3::SetRow(const uint64_t y, const uint64_t z, uint8_t val)
+{
+    if (y >= STATE_H || z >= params.w)
+        throw out_of_range("Specified (y,z) position out of range when setting state array row.");
+
+    if (val >= 0x20)
+        throw invalid_argument("Invalid row value specified when setting state row.");
+
+    for (uint64_t x = 0; x < STATE_W; x++)
+        SetBit(x, y, z, (val & (1 << x)) >> x);
+}
+
+/**
+ * SHA3::SetColumn - Set a value in a user-provided array. Array
+ * assumed to match state array size on input.
+ *
+ * @param x         [in]        x coord.
+ * @param z         [in]        z coord.
+ * @param val       [in]        Value to set.
+ */
+
+void SHA3::SetColumn(const uint64_t x, const uint64_t z, uint8_t val)
+{
+    if (x >= STATE_W || z >= params.w)
+        throw out_of_range("Specified (x,y) position out of range when setting state array column.");
+
+    if (val >= 0x20)
+        throw invalid_argument("Invalid column value specified when setting state column.");
+
+    for (uint64_t y = 0; y < STATE_H; y++)
+        SetBit(x, y, z, (val & (1 << y)) >> y);
+}
+
+/**
+ * SHA3::SetLane - Set a value in a user-provided array. Array
+ * assumed to match state array size on input.
+ *
+ * @param x         [in]        x coord.
+ * @param y         [in]        y coord.
+ * @param val       [in]        Value to set.
+ */
+
+void SHA3::SetLane(const uint64_t x, const uint64_t y, vector<uint8_t>& val)
+{
+    if (x >= STATE_W || y >= STATE_H)
+        throw out_of_range("Specified (x,y) position out of range when setting state array lane.");
+
+    if (val.size() > params.w / 8)
+        throw invalid_argument("Invalid lane value specified when setting state lane.");
+
+    for (uint64_t z = 0; z < STATE_H; z++)
+    {
+        uint8_t byte    = z / 8;
+        uint8_t shift   = z % 8;
+
+        uint8_t bit = (val[byte] & (1 << shift)) >> shift;
+
+        SetBit(x, y, z, bit);
+    }
 }
 
 /**
@@ -234,15 +369,15 @@ void SHA3::Theta()
             uint8_t xLo = (x == 0) ? STATE_W - 1 : x - 1;
 
             uint8_t zHi = z;
-            uint8_t zLo = (z == 0) ? params.w : z - 1;
+            uint8_t zLo = (z == 0) ? params.w - 1 : z - 1;
 
             uint8_t c1  = 0;
             uint8_t c2  = 0;
 
             for (uint64_t y = 0; y < STATE_H; y++)
             {
-                c1 ^= GetIdx(xHi, y, zLo);
-                c2 ^= GetIdx(xLo, y, z);
+                c1 ^= GetBit(xHi, y, zLo);
+                c2 ^= GetBit(xLo, y, z);
             }
 
             uint8_t d = c1 ^ c2;
@@ -285,8 +420,8 @@ void SHA3::Rho()
 
             for (uint64_t i = 0; i < params.w / 8; i++)
             {
-                uint64_t targetHi = (shiftBytes + i + ((laneShift % 8) ? 1 : 0) % params.w);
-                uint64_t targetLo = (shiftBytes + i) % params.w;
+                uint64_t targetHi = (i + shiftBytes + (shiftCarry ? 1 : 0)) % (params.w / 8);
+                uint64_t targetLo = (i + shiftBytes) % (params.w / 8);
 
                 rotatedLane[targetHi] |= ((state[laneStart + i] & maskHi) >> (8 - shiftCarry));
                 rotatedLane[targetLo] |= (state[laneStart + i] & maskLo) << shiftCarry;
@@ -311,8 +446,8 @@ void SHA3::Pi()
         {
             for (uint64_t z = 0; z < params.w; z++)
             {
-                uint8_t in = GetIdx(x, y, z);
-                SetIdx((x + 3 * y) % STATE_W, x, z, in);
+                uint8_t in = GetBit(x, y, z);
+                SetBit((x + 3 * y) % STATE_W, x, z, in);
             }
         }
     }
@@ -334,14 +469,14 @@ void SHA3::Chi()
         {
             for (uint64_t z = 0; z < params.w; z++)
             {
-                uint8_t a1 = GetIdx(x, y, z);
-                uint8_t a2 = GetIdx((x + 1) % STATE_W, y, z);
-                uint8_t a3 = GetIdx((x + 2) % STATE_W, y, z);
+                uint8_t a1 = GetBit(x, y, z);
+                uint8_t a2 = GetBit((x + 1) % STATE_W, y, z);
+                uint8_t a3 = GetBit((x + 2) % STATE_W, y, z);
 
                 a1 ^= a2;
                 a1 *= a3;
 
-                SetIdx(tmp, x, y, z, a1);
+                SetBit(tmp, x, y, z, a1);
             }
         }
     }
@@ -395,9 +530,9 @@ void SHA3::Iota(uint64_t round)
 
     for (uint64_t z = 0; z < params.w; z++)
     {
-        uint8_t a = GetIdx(0, 0, z);
+        uint8_t a = GetBit(0, 0, z);
         a ^= rcs[z];
-        SetIdx(0, 0, z, a);
+        SetBit(0, 0, z, a);
     }
 }
 

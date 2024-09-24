@@ -4,6 +4,10 @@
 
 using namespace std;
 
+#define STATE_W 5
+#define STATE_H 5
+#define STATE_IDX(x, y, z, w) ((w) * (5 * (y) + (x)) + (z))
+
 enum SHASize
 {
     SHA224,
@@ -78,6 +82,7 @@ struct SHA3
     SHA3();
     SHA3(SHA3Params &paramsIn);
 
+    void Hash(vector<uint8_t>& data, vector<uint8_t>& hashOut);
     void SpongeAbsorbBlock(vector<uint8_t> &block);
     void ApplyKeccak();
     void SpongeSqueezeBlock();
@@ -88,8 +93,15 @@ struct SHA3
     void Chi();
     void Iota(uint64_t round);
 
-    void Hash(vector<uint8_t>& data, vector<uint8_t> &hashOut);
-    uint8_t GetIdx(uint64_t x, uint64_t y, uint64_t z);
-    void SetIdx(uint64_t x, uint64_t y, uint64_t z, uint8_t val);
-    void SetIdx(vector<uint8_t>& arrayIn, uint64_t x, uint64_t y, uint64_t z, uint8_t val);
+    uint8_t GetBit(uint64_t x, uint64_t y, uint64_t z);
+    void SetBit(uint64_t x, uint64_t y, uint64_t z, uint8_t val);
+    void SetBit(vector<uint8_t>& arrayIn, uint64_t x, uint64_t y, uint64_t z, uint8_t val);
+
+    uint8_t GetRow(const uint64_t y, const uint64_t z);
+    uint8_t GetColumn(const uint64_t x, const uint64_t z);
+    void GetLane(const uint64_t x, const uint64_t y, vector<uint8_t> &laneOut);
+
+    void SetRow(const uint64_t y, const uint64_t z, uint8_t val);
+    void SetColumn(const uint64_t x, const uint64_t z, uint8_t val);
+    void SetLane(const uint64_t x, const uint64_t y, vector<uint8_t>& val);
 };

@@ -34,6 +34,12 @@ TestResult TestSHA3512Long();
 TestResult TestSHA3512Short();
 TestResult TestSHA3512Monte();
 
+TestResult TestSHA3Theta();
+TestResult TestSHA3Rho();
+TestResult TestSHA3Pi();
+TestResult TestSHA3Chi();
+TestResult TestSHA3Iota();
+
 /*
 TestResult TestSHA3224Long();
 TestResult TestSHA3224Short();

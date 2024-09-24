@@ -93,6 +93,29 @@ void HexArrayToString(const vector<uint8_t>& bytes, string& out)
         { 0xF, 'F' }
     };
 
+    bool bHi = false;
+
     for (uint64_t i = 0; i < bytes.size(); i++)
-        out = hexCharVals[bytes[i]] + out;
+    {
+        out = hexCharVals[(bHi ? ((bytes[i] >> 4) & 0xF) : bytes[i] & 0xF)] + out;
+        bHi = !bHi;
+    }
+}
+
+/**
+ * Parity - Return 1 if an odd number of bits are set, zero otherwise.
+ *
+ * @param val   [in] Input val to check parity.
+ * 
+ * @return Parity of input val.
+ */
+
+uint8_t Parity(uint8_t val)
+{
+    bool parity = false;
+
+    while (val)
+    {
+        parity 
+    }
 }

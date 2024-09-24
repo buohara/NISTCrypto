@@ -56,6 +56,11 @@ TestGroupList testGroups =
             { "TestSHA3512Long",            TestSHA3512Long },
             { "TestSHA3512Short",           TestSHA3512Short },
             { "TestSHA3512Monte",           TestSHA3512Monte },
+            { "TestSHA3Theta",              TestSHA3Theta },
+            { "TestSHA3Rho",                TestSHA3Rho },
+            { "TestSHA3Pi",                 TestSHA3Pi },
+            { "TestSHA3Chi",                TestSHA3Chi },
+            { "TestSHA3Iota",               TestSHA3Iota }
         }
     },
 

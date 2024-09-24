@@ -95,6 +95,81 @@ void LoadTestVecsFromFile(const string file, SHA3TestVecs &vecs)
 }
 
 /**
+ * TestSHA3Theta - Test SHA3 Theta step function with known inputs
+ * and outputs.
+ *
+ * @return  Pass if known transformation matches, fail otherwise.
+ */
+
+TestResult TestSHA3Theta()
+{
+    SHA3 sha3;
+
+    uint8_t col1    = rand() % 0x20;
+    uint8_t col2    = rand() % 0x20;
+
+    uint8_t xRand   = rand() % STATE_W;
+    uint8_t yRand   = rand() % STATE_H;
+    uint8_t zRand   = rand() % sha3.params.w;
+
+    sha3.SetBit(xRand, yRand, zRand, 1);
+    sha3.SetColumn(xRand == 0 ? STATE_W - 1 : xRand - 1, zRand, col1);
+    sha3.SetColumn(xRand == STATE_W - 1 ? 0 : xRand + 1, zRand == 0 ? sha3.params.w - 1 : zRand - 1, col2);
+
+
+
+    sha3.Theta();
+}
+
+/**
+ * TestSHA3Rho - Test Rho Theta step function with known inputs
+ * and outputs.
+ *
+ * @return  Pass if known transformation matches, fail otherwise.
+ */
+
+TestResult TestSHA3Rho()
+{
+
+}
+
+/**
+ * TestSHA3Pi - Test SHA3 Pi step function with known inputs
+ * and outputs.
+ *
+ * @return  Pass if known transformation matches, fail otherwise.
+ */
+
+TestResult TestSHA3Pi()
+{
+
+}
+
+/**
+ * TestSHA3Chi - Test SHA3 Chi step function with known inputs
+ * and outputs.
+ *
+ * @return  Pass if known transformation matches, fail otherwise.
+ */
+
+TestResult TestSHA3Chi()
+{
+
+}
+
+/**
+ * TestSHA3Iota - Test SHA3 Iota step function with known inputs
+ * and outputs.
+ *
+ * @return  Pass if known transformation matches, fail otherwise.
+ */
+
+TestResult TestSHA3Iota()
+{
+
+}
+
+/**
  * TestSHA3512Long - Compute a SHA3 hash for a long input and compare
  * against known value.
  *

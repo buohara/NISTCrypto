@@ -8,3 +8,4 @@ using namespace std;
 
 void StringToHexArray(const string val, vector<uint8_t>& bytes);
 void HexArrayToString(const vector<uint8_t>& bytes, string &out);
+uint8_t Parity(uint8_t val);
