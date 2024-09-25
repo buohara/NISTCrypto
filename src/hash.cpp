@@ -1,6 +1,78 @@
 #include "hash.h"
 
 /**
+ * MsgStreamer::SetData - Set data to be hashed in the message
+ * streamer.
+ *
+ * @param dataIn    [in] Data to be hashed.
+ */
+
+void MsgStreamer::SetData(vector<uint8_t>& dataIn)
+{
+    data.resize(dataIn.size());
+    memcpy(&data[0], &dataIn[0], data.size());
+    data.push_back(0x40);
+}
+
+/**
+ * MsgStreamer::Reset - Reset the streamer to the beginning of the
+ * message.
+ */
+
+void MsgStreamer::Reset()
+{
+    offset = 0;
+}
+
+/**
+ * MsgStreamer::Next - Grab the next data block from the stream and pad
+ * with zeros to fit the sponge input size.
+ *
+ * @param blockOut    [in/out]  Byte array to fill with padded msg block.
+ */
+
+void MsgStreamer::Next(vector<uint8_t>& blockOut)
+{
+    uint8_t arrayBytes  = b / 8;
+    uint8_t rateBytes   = r / 8;
+
+    if (blockOut.size() != arrayBytes)
+        throw invalid_argument("Wrong output block size passed in while streaming SHA3 message blocks.");
+
+    memset(&blockOut[0], 0, arrayBytes);
+
+    if (offset + rateBytes < data.size())
+    {
+        memcpy(&blockOut[0], &data[offset], rateBytes);
+        offset              += rateBytes;
+        blockOut[rateBytes] = 0x80;
+    }
+    else
+    {
+        memcpy(&blockOut[0], &data[offset], data.size() - offset - 1);
+        blockOut[data.size() - offset] = 0x80;
+        offset = data.size() - 1;
+    }
+
+    blockOut[blockOut.size() - 1] = 0x01;
+}
+
+/**
+ * MsgStreamer::End - True if the streamer has reached the end of the
+ * message.
+ *
+ * @return True if at the end of the message, false otherwise.
+ */
+
+bool MsgStreamer::End()
+{
+    if (offset == data.size() - 1)
+        return true;
+
+    return false;
+}
+
+/**
  * SHA3::Get - Get a value from the state array at specified
  * x, y, z position.
  *
@@ -41,7 +113,7 @@ void SHA3::SetBit(uint64_t x, uint64_t y, uint64_t z, uint8_t val)
     uint64_t byte   = idx / 8;
     uint64_t shift  = idx % 8;
 
-    state[byte] |= (val << shift);
+    state[byte]     |= (val << shift);
 }
 
 /**
@@ -132,8 +204,8 @@ void SHA3::GetLane(const uint64_t x, const uint64_t y, vector<uint8_t>& laneOut)
 
     for (uint64_t z = 0; z < STATE_W; z++)
     {
-        uint8_t byte    = z / 8;
-        uint8_t shift   = z % 8;
+        uint8_t byte    = (uint8_t)z / 8;
+        uint8_t shift   = (uint8_t)z % 8;
 
         laneOut[byte] |= GetBit(x, y, z) << shift;
     }
@@ -200,77 +272,13 @@ void SHA3::SetLane(const uint64_t x, const uint64_t y, vector<uint8_t>& val)
 
     for (uint64_t z = 0; z < STATE_H; z++)
     {
-        uint8_t byte    = z / 8;
-        uint8_t shift   = z % 8;
+        uint8_t byte    = (uint8_t)z / 8;
+        uint8_t shift   = (uint8_t)z % 8;
 
         uint8_t bit = (val[byte] & (1 << shift)) >> shift;
 
         SetBit(x, y, z, bit);
     }
-}
-
-/**
- * MsgStreamer::SetData - Set data to be hashed in the message
- * streamer.
- *
- * @param dataIn    [in] Data to be hashed.
- */
-
-void MsgStreamer::SetData(vector<uint8_t>& dataIn)
-{
-    data.resize(dataIn.size());
-    memcpy(&data[0], &dataIn[0], data.size());
-}
-
-/**
- * MsgStreamer::Reset - Reset the streamer to the beginning of the
- * message.
- */
-
-void MsgStreamer::Reset()
-{
-    offset = 0;
-}
-
-/**
- * MsgStreamer::Next - Grab the next data block from the stream and pad
- * with zeros to fit the sponge input size.
- *
- * @param blockOut    [in/out]  Byte array to fill with padded msg block.
- */
-
-void MsgStreamer::Next(vector<uint8_t>& blockOut)
-{
-    if (blockOut.size() != b / 8)
-        throw invalid_argument("Wrong output block size passed in while streaming SHA3 message blocks.");
-
-    memset(&blockOut[0], 0, b / 8);
-
-    if (offset + (r / 8) < data.size())
-    {
-        memcpy(&blockOut[0], &data[offset], r / 8);
-        offset += r / 8;
-    }
-    else
-    {
-        memcpy(&blockOut[0], &data[offset], data.size() - offset - 1);
-        offset = data.size() - 1;
-    }
-}
-
-/**
- * MsgStreamer::End - True if the streamer has reached the end of the
- * message.
- * 
- * @return True if at the end of the message, false otherwise.
- */
-
-bool MsgStreamer::End()
-{
-    if (offset == data.size() - 1)
-        return true;
-
-    return false;
 }
 
 /**
@@ -281,6 +289,36 @@ bool MsgStreamer::End()
 
 SHA3::SHA3()
 {
+    state.resize(STATE_W * STATE_H * params.w / 8, 0);
+}
+
+/**
+ * SHA3::SHA3 - Constructor. Initialize default parameters based on input
+ * size;
+ */
+
+SHA3::SHA3(SHASize sz)
+{
+    if (sz == SHA224)
+        params.d = 224;
+
+    if (sz == SHA256)
+        params.d = 256;
+
+    if (sz == SHA384)
+        params.d = 384;
+
+    if (sz == SHA512)
+        params.d = 512;
+
+    params.b    = 1600;
+    params.c    = 2 * params.d;
+    params.r    = params.b - params.c;
+    params.sz   = sz;
+    params.w    = 64;
+    params.l    = 6;
+    params.n    = 12 + 2 * params.l;
+
     state.resize(STATE_W * STATE_H * params.w / 8, 0);
 }
 
@@ -306,6 +344,24 @@ SHA3::SHA3(SHA3Params& paramsIn) : params(paramsIn), stream(params.r, params.b)
     }
 
     state.resize(STATE_W * STATE_H * params.w / 8, 0);
+}
+
+/**
+ * SHA3::Size - Return the size of the state array in bytes.
+ */
+
+uint64_t SHA3::Size()
+{
+    return STATE_W * STATE_H * params.w / 8;
+}
+
+/**
+ * SHA3::ClearState - Clear the state array to zeros.
+ */
+
+void SHA3::ClearState()
+{
+    memset(&state[0], 0, Size());
 }
 
 /**
@@ -361,15 +417,15 @@ void SHA3::Theta()
 {
     vector<uint8_t> tmp(STATE_W * STATE_H * params.w / 8);
 
-    for (uint64_t x = 0; x < STATE_W; x++)
+    for (uint8_t x = 0; x < STATE_W; x++)
     {
-        for (uint64_t z = 0; z < params.w; z++)
+        for (uint8_t z = 0; z < params.w; z++)
         {
             uint8_t xHi = (x == STATE_W - 1) ? 0 : x + 1;
             uint8_t xLo = (x == 0) ? STATE_W - 1 : x - 1;
 
             uint8_t zHi = z;
-            uint8_t zLo = (z == 0) ? params.w - 1 : z - 1;
+            uint8_t zLo = (z == 0) ? (uint8_t)params.w - 1 : z - 1;
 
             uint8_t c1  = 0;
             uint8_t c2  = 0;

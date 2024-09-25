@@ -1,6 +1,8 @@
 #include "test.h"
 #include "hash.h"
 
+const uint64_t numCases = 100;
+
 enum SHA3_TEST_MODE
 {
     MSG,
@@ -103,22 +105,55 @@ void LoadTestVecsFromFile(const string file, SHA3TestVecs &vecs)
 
 TestResult TestSHA3Theta()
 {
+    TestResult res;
     SHA3 sha3;
 
-    uint8_t col1    = rand() % 0x20;
-    uint8_t col2    = rand() % 0x20;
+    for (uint64_t i = 0; i < numCases; i++)
+    {
+        sha3.ClearState();
 
-    uint8_t xRand   = rand() % STATE_W;
-    uint8_t yRand   = rand() % STATE_H;
-    uint8_t zRand   = rand() % sha3.params.w;
+        uint8_t col1        = rand() % 0x20;
+        uint8_t col2        = rand() % 0x20;
+        uint8_t arrayVal    = rand() % 2;
 
-    sha3.SetBit(xRand, yRand, zRand, 1);
-    sha3.SetColumn(xRand == 0 ? STATE_W - 1 : xRand - 1, zRand, col1);
-    sha3.SetColumn(xRand == STATE_W - 1 ? 0 : xRand + 1, zRand == 0 ? sha3.params.w - 1 : zRand - 1, col2);
+        uint8_t xRand       = rand() % STATE_W;
+        uint8_t yRand       = rand() % STATE_H;
+        uint8_t zRand       = rand() % sha3.params.w;
 
+        sha3.SetBit(xRand, yRand, zRand, arrayVal);
+        sha3.SetColumn(xRand == 0 ? STATE_W - 1 : xRand - 1, zRand, col1);
+        sha3.SetColumn(xRand == STATE_W - 1 ? 0 : xRand + 1, zRand == 0 ? sha3.params.w - 1 : zRand - 1, col2);
+        sha3.Theta();
 
+        uint8_t p1 = Parity(col1);
+        uint8_t p2 = Parity(col2);
+        uint8_t parityExp = arrayVal ^ p1 ^ p2;
 
-    sha3.Theta();
+        uint8_t thetaOut = sha3.GetBit(xRand, yRand, zRand);
+
+        if (parityExp != thetaOut)
+        {
+            char msg[256];
+
+            sprintf(
+                msg,
+                "SHA3 Theta parity transformation check failed at (%lu, %lu, %lu). Expected = %lu, actual = %lu.",
+                xRand,
+                yRand,
+                zRand,
+                parityExp,
+                thetaOut
+            );
+
+            res.caseResults.push_back({ FAIL, string(msg) });
+        }
+        else
+        {
+            res.caseResults.push_back({ PASS, "" });
+        }
+    }
+
+    return res;
 }
 
 /**
@@ -130,7 +165,56 @@ TestResult TestSHA3Theta()
 
 TestResult TestSHA3Rho()
 {
+    TestResult res;
+    SHA3 sha3;
 
+    const uint64_t laneOffsets[5][5] =
+    {
+        0,    1, 190,  28,  91,
+        36, 300,   6,  55, 276,
+        3,   10, 171, 153, 231,
+        105, 45,  15,  21, 136,
+        210, 66, 253, 120,  78
+    };
+
+    for (uint64_t i = 0; i < numCases; i++)
+    {
+        sha3.ClearState();
+
+        uint8_t xRand = rand() % STATE_W;
+        uint8_t yRand = rand() % STATE_H;
+        uint8_t zRand = rand() % sha3.params.w;
+
+        sha3.SetBit(xRand, yRand, zRand, 1);
+        sha3.Rho();
+
+        uint64_t laneOffset = laneOffsets[xRand][yRand];
+        uint8_t zExp        = (zRand + laneOffset) % (sha3.params.w / 8);
+        uint8_t out         = sha3.GetBit(xRand, yRand, zExp);
+
+        if (!out)
+        {
+            char msg[256];
+
+            sprintf(
+                msg,
+                "SHA3 Rho lane offset transformation check failed at (%lu, %lu, %lu)." \
+                    "Expected 1 at z = % lu.",
+                xRand,
+                yRand,
+                zRand,
+                zExp
+            );
+
+            res.caseResults.push_back({ FAIL, string(msg) });
+        }
+        else
+        {
+            res.caseResults.push_back({ PASS, "" });
+        }
+    }
+
+    return res;
 }
 
 /**
@@ -142,7 +226,48 @@ TestResult TestSHA3Rho()
 
 TestResult TestSHA3Pi()
 {
+    TestResult res;
+    SHA3 sha3;
 
+    for (uint64_t i = 0; i < numCases; i++)
+    {
+        sha3.ClearState();
+
+        uint8_t xRand   = rand() % STATE_W;
+        uint8_t yRand   = rand() % STATE_H;
+
+        vector<uint8_t> laneVal(sha3.params.w / 8, 0xA5);
+        sha3.SetLane(xRand, yRand, laneVal);
+
+        uint8_t xExp    = (xRand + 3 * yRand) % STATE_W;
+        uint8_t yExp    = xRand;
+
+        vector<uint8_t> laneAct;
+        sha3.GetLane(xExp, yExp, laneAct);
+
+        if (memcmp(&laneVal[0], &laneAct[0], laneVal.size()))
+        {
+            char msg[256];
+
+            sprintf(
+                msg,
+                "SHA3 Pi lane rotation transformation check failed at (%lu, %lu). Expected" \
+                    "0xA5A5A5A5A5A5A5A5 at (%lu, %lu).",
+                xRand,
+                yRand,
+                xExp,
+                yExp
+            );
+
+            res.caseResults.push_back({ FAIL, string(msg) });
+        }
+        else
+        {
+            res.caseResults.push_back({ PASS, "" });
+        }
+    }
+
+    return res;
 }
 
 /**
@@ -154,7 +279,8 @@ TestResult TestSHA3Pi()
 
 TestResult TestSHA3Chi()
 {
-
+    TestResult res;
+    return res;
 }
 
 /**
@@ -166,7 +292,8 @@ TestResult TestSHA3Chi()
 
 TestResult TestSHA3Iota()
 {
-
+    TestResult res;
+    return res;
 }
 
 /**

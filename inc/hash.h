@@ -80,7 +80,10 @@ struct SHA3
     MsgStreamer stream;
 
     SHA3();
+    SHA3(SHASize sz);
     SHA3(SHA3Params &paramsIn);
+    uint64_t Size();
+    void ClearState();
 
     void Hash(vector<uint8_t>& data, vector<uint8_t>& hashOut);
     void SpongeAbsorbBlock(vector<uint8_t> &block);

@@ -112,10 +112,15 @@ void HexArrayToString(const vector<uint8_t>& bytes, string& out)
 
 uint8_t Parity(uint8_t val)
 {
-    bool parity = false;
+    uint8_t bitCount = 0;
 
     while (val)
     {
-        parity 
+        if (val & 0x1)
+            bitCount++;
+
+        val >>= 1;
     }
+
+    return bitCount % 2;
 }
