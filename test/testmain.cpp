@@ -1,6 +1,8 @@
 #include "commoninc.h"
 #include "test.h"
 
+#include "hash.h"
+
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
 
@@ -205,14 +207,24 @@ static void InitLogFile()
 }
 
 /**
- * LogResult - Logging helper. Print messages to a log file or console
+ * CloseLogFile - Close log file if specified on the command line.
+ */
+
+static void CloseLogFile()
+{
+    if (gbLogToFile)
+        fclose(gpLogFile);
+}
+
+/**
+ * LogMessage - Logging helper. Print messages to a log file or console
  * depending on log file config.
  *
  * @param format        [in]  Log message format.
  * @param args (...)    [in]  Variadic argument list.
  */
 
-static void LogResult(const char* format, ...)
+static void LogMessage(const char* format, ...)
 {
     const uint64_t bufSize = 512;
     char msgBuf[bufSize];
@@ -220,14 +232,13 @@ static void LogResult(const char* format, ...)
     va_list args;
     va_start(args, format);
 
+    vsnprintf(msgBuf, sizeof(msgBuf), format, args);
+    string msgStr = string(msgBuf);
+
     if (gbLogToFile)
-    {
-        sprintf(msgBuf, format, args);
-        fwrite(string(msgBuf).c_str(), sizeof(char), bufSize, gpLogFile);
-    }
-    {
-        printf(format, args);
-    }
+        fwrite(msgStr.c_str(), sizeof(char), msgStr.size(), gpLogFile);
+    else
+        printf("%s\n", msgBuf);
 
     va_end(args);
 
@@ -252,6 +263,8 @@ void RunTests(TestArgs& args)
         string groupName        = testGroups[groupID].first.first;
         TestGroupCases& cases   = testGroups[groupID].second;
 
+        LogMessage("Beginning test group %s...\n", groupName.c_str());
+
         if (args.testIDs[i] > testGroups.size())
             throw invalid_argument("Invalid test group ID encountered running Handshake tests.");
 
@@ -265,17 +278,19 @@ void RunTests(TestArgs& args)
 
                 for (uint64_t k = 0; k < res.caseResults.size(); k++)
                 {
-                    LogResult("Case %llu %s %s\n", ResultCodeStrings[res.caseResults[k].first].c_str(),
+                    LogMessage("Case %llu %s %s\n", k, ResultCodeStrings[res.caseResults[k].first].c_str(),
                         res.caseResults[k].second.c_str());
                 }
             }
             catch (exception& e)
             {
-                LogResult("Exception encountered in Handshake tests: '%s'. Continuing to next case.\n",
+                LogMessage("Exception encountered in Handshake tests: '%s'. Continuing to next case.\n",
                     e.what());
             }
         }
     }
+
+    CloseLogFile();
 }
 
 /**

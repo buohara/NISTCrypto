@@ -4,9 +4,12 @@
 
 using namespace std;
 
-#define STATE_W 5
-#define STATE_H 5
-#define STATE_IDX(x, y, z, w) ((w) * (5 * (y) + (x)) + (z))
+#define STATE_W             5
+#define STATE_H             5
+#define STATE_L             64
+#define NUM_SHA3_ROUNDS     24
+
+#define STATE_IDX(x, y, z) (320 * (y) + 64 * (x) + (z))
 
 enum SHASize
 {
@@ -83,7 +86,9 @@ struct SHA3
     SHA3(SHASize sz);
     SHA3(SHA3Params &paramsIn);
     uint64_t Size();
+
     void ClearState();
+    void PrintState();
 
     void Hash(vector<uint8_t>& data, vector<uint8_t>& hashOut);
     void SpongeAbsorbBlock(vector<uint8_t> &block);
@@ -97,8 +102,8 @@ struct SHA3
     void Iota(uint64_t round);
 
     uint8_t GetBit(uint64_t x, uint64_t y, uint64_t z);
-    void SetBit(uint64_t x, uint64_t y, uint64_t z, uint8_t val);
-    void SetBit(vector<uint8_t>& arrayIn, uint64_t x, uint64_t y, uint64_t z, uint8_t val);
+    void SetBit(uint64_t x, uint64_t y, uint64_t z);
+    void SetBit(vector<uint8_t>& arrayIn, uint64_t x, uint64_t y, uint64_t z);
 
     uint8_t GetRow(const uint64_t y, const uint64_t z);
     uint8_t GetColumn(const uint64_t x, const uint64_t z);
