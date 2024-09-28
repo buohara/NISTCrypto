@@ -104,6 +104,8 @@ struct SHA3
     uint8_t GetBit(uint64_t x, uint64_t y, uint64_t z);
     void SetBit(uint64_t x, uint64_t y, uint64_t z);
     void SetBit(vector<uint8_t>& arrayIn, uint64_t x, uint64_t y, uint64_t z);
+    void ClearBit(uint64_t x, uint64_t y, uint64_t z);
+    void ClearBit(vector<uint8_t>& arrayIn, uint64_t x, uint64_t y, uint64_t z);
 
     uint8_t GetRow(const uint64_t y, const uint64_t z);
     uint8_t GetColumn(const uint64_t x, const uint64_t z);

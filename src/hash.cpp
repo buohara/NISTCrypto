@@ -9,9 +9,13 @@
 
 void MsgStreamer::SetData(vector<uint8_t>& dataIn)
 {
-    data.resize(dataIn.size());
+    const uint8_t padBytes  = dataIn.size() % 200;
+
+    data.resize(dataIn.size() + padBytes);
     memcpy(&data[0], &dataIn[0], data.size());
-    data.push_back(0x40);
+    
+    data[dataIn.size()]     = 0x80;
+    data[data.size() - 1]   = 0x1;
 }
 
 /**
@@ -33,28 +37,16 @@ void MsgStreamer::Reset()
 
 void MsgStreamer::Next(vector<uint8_t>& blockOut)
 {
-    uint8_t arrayBytes  = b / 8;
-    uint8_t rateBytes   = r / 8;
+    uint8_t rateBytes = r / 8;
 
-    if (blockOut.size() != arrayBytes)
+    if (blockOut.size() != rateBytes)
         throw invalid_argument("Wrong output block size passed in while streaming SHA3 message blocks.");
 
-    memset(&blockOut[0], 0, arrayBytes);
+    if (offset == data.size())
+        throw out_of_range("Tried accessing past end of SHA3 input message.");
 
-    if (offset + rateBytes < data.size())
-    {
-        memcpy(&blockOut[0], &data[offset], rateBytes);
-        offset              += rateBytes;
-        blockOut[rateBytes] = 0x80;
-    }
-    else
-    {
-        memcpy(&blockOut[0], &data[offset], data.size() - offset - 1);
-        blockOut[data.size() - offset] = 0x80;
-        offset = data.size() - 1;
-    }
-
-    blockOut[blockOut.size() - 1] = 0x01;
+    memcpy(&blockOut[0], &data[offset], rateBytes);
+    offset += rateBytes;
 }
 
 /**
@@ -132,6 +124,46 @@ void SHA3::SetBit(vector<uint8_t> &arrayIn, uint64_t x, uint64_t y, uint64_t z)
     uint64_t shift  = idx % 8;
 
     arrayIn[byte]   |= (1 << shift);
+}
+
+/**
+ * SHA3::ClearBit - Clear a bit in the state array at specified
+ * x, y, z position.
+ *
+ * @param x    [in] x coord.
+ * @param y    [in] y coord.
+ * @param z    [in] z coord.
+ */
+
+void SHA3::ClearBit(uint64_t x, uint64_t y, uint64_t z)
+{
+    uint64_t idx    = STATE_IDX(x, y, z);
+    uint64_t byte   = idx / 8;
+    uint64_t shift  = idx % 8;
+
+    state[byte] &= ~(1 << shift);
+}
+
+/**
+ * SHA3::ClearBit - Clear a bit in a user-provided array. Array
+ * assumed to match state array size on input.
+ *
+ * @param arrayIn   [in/out]    Set value into this array.
+ * @param x         [in]        x coord.
+ * @param y         [in]        y coord.
+ * @param z         [in]        z coord.
+ */
+
+void SHA3::ClearBit(vector<uint8_t>& arrayIn, uint64_t x, uint64_t y, uint64_t z)
+{
+    if (arrayIn.size() != state.size())
+        throw invalid_argument("Unexpected input array size when setting x, y, z val.");
+
+    uint64_t idx = STATE_IDX(x, y, z);
+    uint64_t byte = idx / 8;
+    uint64_t shift = idx % 8;
+
+    arrayIn[byte] &= ~(1 << shift);
 }
 
 /**
@@ -368,7 +400,7 @@ void SHA3::PrintState()
 
     for (uint8_t x = 0; x < STATE_W; x++)
     {
-        printf("x[%lu]\n", x);
+        printf("x[%lu]\n\n", x);
         for (uint8_t y = 0; y < STATE_H; y++)
         {
             printf("y[%lu]: ", y);
@@ -383,7 +415,7 @@ void SHA3::PrintState()
             printf("\n");
 
         }
-        printf("\n\n");
+        printf("\n");
 
     }
 }
@@ -397,10 +429,12 @@ void SHA3::PrintState()
 
 void SHA3::SpongeAbsorbBlock(vector<uint8_t>& block)
 {
-    if (block.size() != state.size())
+    const uint8_t rateBytes = params.r / 8;
+
+    if (block.size() != rateBytes)
         throw invalid_argument("SHA3 sponge input block doesn't match state array size");
 
-    for (uint64_t i = 0; i < state.size(); i++)
+    for (uint64_t i = 0; i < rateBytes; i++)
         state[i] ^= block[i];
 
     ApplyKeccak();
@@ -419,7 +453,7 @@ void SHA3::ApplyKeccak()
         Rho();
         Pi();
         Chi();
-        Iota(params.n);
+        Iota(i);
     }
 }
 
@@ -439,7 +473,7 @@ void SHA3::SpongeSqueezeBlock()
 
 void SHA3::Theta()
 {
-    vector<uint8_t> tmp(STATE_W * STATE_H * STATE_L / 8);
+    vector<uint8_t> tmp = state;
 
     for (uint8_t x = 0; x < STATE_W; x++)
     {
@@ -447,8 +481,6 @@ void SHA3::Theta()
         {
             uint8_t xHi = (x == STATE_W - 1) ? 0 : x + 1;
             uint8_t xLo = (x == 0) ? STATE_W - 1 : x - 1;
-
-            uint8_t zHi = z;
             uint8_t zLo = (z == 0) ? (uint8_t)STATE_L - 1 : z - 1;
 
             uint8_t c1  = 0;
@@ -469,11 +501,13 @@ void SHA3::Theta()
 
                 if (a)
                     SetBit(tmp, x, y, z);
+                else
+                    ClearBit(tmp, x, y, z);
             }
         }
     }
 
-    memcpy(&state[0], &tmp[0], state.size());
+    state = tmp;
 }
 
 /**
@@ -529,7 +563,7 @@ void SHA3::Rho()
 
 void SHA3::Pi()
 {
-    vector<uint8_t> tmp(params.b / 8);
+    vector<uint8_t> tmp = state;
 
     for (uint64_t x = 0; x < STATE_W; x++)
     {
@@ -541,11 +575,13 @@ void SHA3::Pi()
 
                 if (in)
                     SetBit(tmp, (x + 3 * y) % STATE_W, x, z);
+                else
+                    ClearBit(tmp, (x + 3 * y) % STATE_W, x, z);
             }
         }
     }
 
-    memcpy(&state[0], &tmp[0], params.b / 8);
+    state = tmp;
 }
 
 /**
@@ -554,7 +590,7 @@ void SHA3::Pi()
 
 void SHA3::Chi()
 {
-    vector<uint8_t> tmp(params.b / 8);
+    vector<uint8_t> tmp = state;
 
     for (uint64_t x = 0; x < STATE_W; x++)
     {
@@ -571,11 +607,13 @@ void SHA3::Chi()
 
                 if (a1)
                     SetBit(tmp, x, y, z);
+                else
+                    ClearBit(tmp, x, y, z);
             }
         }
     }
 
-    memcpy(&state[0], &tmp[0], params.b / 8);
+    state = tmp;
 }
 
 /**
@@ -617,10 +655,10 @@ static uint8_t RC(const uint64_t t)
 void SHA3::Iota(uint64_t round)
 {
     vector<uint8_t> rcs(params.w, 0);
-    vector<uint8_t> tmp(STATE_W * STATE_H * STATE_L / 9);
-    const uint8_t indices[7] = { 0, 1, 3, 7, 15, 31, 63 };
+    vector<uint8_t> tmp         = state;
+    const uint8_t indices[7]    = { 0, 1, 3, 7, 15, 31, 63 };
 
-    for (uint64_t j = 0; j < params.l; j++)
+    for (uint64_t j = 0; j <= params.l; j++)
         rcs[indices[j]] = RC(j + 7 * round);
 
     for (uint64_t z = 0; z < params.w; z++)
@@ -630,9 +668,11 @@ void SHA3::Iota(uint64_t round)
 
         if (a)
             SetBit(tmp, 0, 0, z);
+        else
+            ClearBit(tmp, 0, 0, z);
     }
 
-    memcpy(&state[0], &tmp[0], state.size());
+    state = tmp;
 }
 
 /**
@@ -648,7 +688,7 @@ void SHA3::Hash(vector<uint8_t>& data, vector<uint8_t>& hashOut)
         throw invalid_argument("Expected output hash array to be empty when calling SHA3.");
 
     stream.SetData(data);
-    vector<uint8_t> curBlock(params.b / 8);
+    vector<uint8_t> curBlock(params.r / 8);
 
     while (!stream.End())
     {

@@ -395,16 +395,22 @@ TestResult TestSHA3Iota()
         for (uint64_t j = 0; j < lane.size(); j++)
             lane[j] = rand() % 256;
 
+        sha3.SetLane(0, 0, lane);
+
         for (uint64_t j = 0; j < 7; j++)
-            rcs[indices[j]] = RC(round);
+            rcs[indices[j]] = RC(j + 7 * round);
 
         vector<uint8_t> laneExp(8, 0);
 
-        for (uint64_t j = 0; j < sha3.params.w; j++)
+        for (uint64_t j = 0; j < STATE_L; j++)
         {
             uint8_t byte    = j / 8;
             uint8_t bit     = j % 8;
-            laneExp[byte]   |= ((lane[byte] & (1 << bit)) ^ rcs[j]) << bit;
+            uint8_t laneIn  = lane[byte] & (1 << bit);
+            laneIn          >>= bit;
+            laneIn          ^= rcs[j];
+            laneIn          <<= bit;
+            laneExp[byte]   |= laneIn;
         }
 
         sha3.Iota(round);
