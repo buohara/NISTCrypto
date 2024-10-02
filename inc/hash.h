@@ -7,8 +7,12 @@ using namespace std;
 #define STATE_W             5
 #define STATE_H             5
 #define STATE_L             64
+#define STATE_BYTES         STATE_W * STATE_H * STATE_L / 8
 #define NUM_SHA3_ROUNDS     24
 
+#define SHA3_WORD_SZ        64
+
+#define LANE(x, y) (5 * (y) + (x))
 #define STATE_IDX(x, y, z) (320 * (y) + 64 * (x) + (z))
 
 enum SHASize
@@ -17,6 +21,12 @@ enum SHASize
     SHA256,
     SHA384,
     SHA512
+};
+
+enum PrintMode
+{
+    XY,
+    LINEAR
 };
 
 struct SHA3Params
@@ -60,40 +70,34 @@ struct SHA3Params
 struct MsgStreamer
 {
     uint64_t r;
-    uint64_t b;
     uint64_t offset;
 
     vector<uint8_t> data;
-    MsgStreamer() : r(576), b(1600), offset(0) {};
 
-    MsgStreamer(uint64_t rIn, uint64_t bIn) :
-        r(rIn), b(bIn), offset(0) {};
+    MsgStreamer() : r(0), offset(0) {}
+    MsgStreamer(uint64_t rIn) : r(rIn), offset(0) {};
 
     void SetData(vector<uint8_t>& dataIn);
     void Reset();
-    void Next(vector<uint8_t>& blockOut);
+    void Next(vector<uint64_t>& blockOut);
     bool End();
 };
 
 struct SHA3
 {
     SHA3Params params;
-    vector<uint8_t> state;
+    uint64_t state[STATE_W * STATE_H];
 
     MsgStreamer stream;
-
-    SHA3();
     SHA3(SHASize sz);
-    SHA3(SHA3Params &paramsIn);
-    uint64_t Size();
 
     void ClearState();
-    void PrintState();
+    void PrintState(PrintMode mode = XY);
 
-    void Hash(vector<uint8_t>& data, vector<uint8_t>& hashOut);
-    void SpongeAbsorbBlock(vector<uint8_t> &block);
+    void Hash(vector<uint8_t>& data, vector<uint8_t>& md);
+    void SpongeAbsorbBlock(vector<uint64_t> &block);
     void ApplyKeccak();
-    void SpongeSqueezeBlock();
+    void SpongeSqueezeBlock(vector<uint8_t>& md);
 
     void Theta();
     void Rho();
@@ -101,17 +105,12 @@ struct SHA3
     void Chi();
     void Iota(uint64_t round);
 
-    uint8_t GetBit(uint64_t x, uint64_t y, uint64_t z);
-    void SetBit(uint64_t x, uint64_t y, uint64_t z);
-    void SetBit(vector<uint8_t>& arrayIn, uint64_t x, uint64_t y, uint64_t z);
-    void ClearBit(uint64_t x, uint64_t y, uint64_t z);
-    void ClearBit(vector<uint8_t>& arrayIn, uint64_t x, uint64_t y, uint64_t z);
+    uint64_t GetBit(uint64_t x, uint64_t y, uint64_t z);
+    void SetBit(uint64_t x, uint64_t y, uint64_t z, uint64_t bit);
+    void SetBit(uint64_t arrayIn[STATE_W * STATE_H], uint64_t x,
+        uint64_t y, uint64_t z, uint64_t bit);
 
-    uint8_t GetRow(const uint64_t y, const uint64_t z);
-    uint8_t GetColumn(const uint64_t x, const uint64_t z);
-    void GetLane(const uint64_t x, const uint64_t y, vector<uint8_t> &laneOut);
+private:
 
-    void SetRow(const uint64_t y, const uint64_t z, uint8_t val);
-    void SetColumn(const uint64_t x, const uint64_t z, uint8_t val);
-    void SetLane(const uint64_t x, const uint64_t y, vector<uint8_t>& val);
+    SHA3();
 };
