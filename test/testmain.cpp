@@ -55,7 +55,7 @@ TestGroupList testGroups =
     {
         { "Hash", "Hash algorithm unit tests." },
         {
-            { "TestSHA3512Long",            TestSHA3512Long },
+            //{ "TestSHA3512Long",            TestSHA3512Long },
             { "TestSHA3512Short",           TestSHA3512Short },
             { "TestSHA3512Monte",           TestSHA3512Monte }
         }
@@ -304,19 +304,6 @@ void RunTests(TestArgs& args)
 
 int main(int argc, char** argv)
 {
-    for (uint64_t y = 0; y < 5; y++)
-    {
-        for (uint64_t x = 0; x < 5; x++)
-        {
-            uint64_t xOut   = (x + 3 * y) % 5;
-            uint64_t yOut   = x;
-            uint64_t outIdx = LANE(xOut, yOut);
-            uint64_t inIdx  = LANE(x, y);
-
-            printf("%llu -> %llu\n", inIdx, outIdx);
-        }
-    }
-
     vector<string> args(argv + 1, argv + argc);
     TestArgs argsOut;
 

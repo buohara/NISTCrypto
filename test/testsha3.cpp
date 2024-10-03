@@ -47,7 +47,7 @@ void LoadTestVecsFromFile(const string file, SHA3TestVecs &vecs)
     regex reSeed(patternSeed);
     regex reCount(patternCount);
 
-    char buf[512];
+    char buf[32768];
     smatch match;
 
     while (fgets(buf, sizeof(buf), pFile) != NULL)
@@ -58,8 +58,11 @@ void LoadTestVecsFromFile(const string file, SHA3TestVecs &vecs)
         {
             vecs.mode = MSG;
             vector<uint8_t> msg;
-
             StringToHexArray(match[1], msg, false);
+
+            while (msg.size() && msg[0] == 0)
+                msg.erase(msg.begin());
+
             vecs.msgs.push_back(msg);
             continue;
         }
@@ -89,7 +92,8 @@ void LoadTestVecsFromFile(const string file, SHA3TestVecs &vecs)
         }
     }
 
-    assert(vecs.msgs.size() == vecs.mds.size());
+    if (vecs.mode == MSG)
+        assert(vecs.msgs.size() == vecs.mds.size());
 }
 
 /**
@@ -110,12 +114,12 @@ TestResult TestSHA3512Long()
     {
         SHA3 sha3(SHA512);
         vector<uint8_t> mdOut;
-        //sha3.Hash(vecs.msgs[i], mdOut);
+        sha3.Hash(vecs.msgs[i], mdOut);
 
-        vector<uint8_t> msg = {};
-        sha3.Hash(msg, mdOut);
+        bool bSameSize  = (mdOut.size() == vecs.mds[i].size());
+        uint64_t mem    = memcmp(&mdOut[0], &vecs.mds[i][0], mdOut.size());
 
-        if (mdOut.size() != vecs.mds[i][0] ||
+        if (mdOut.size() != vecs.mds[i].size() ||
             (memcmp(&mdOut[0], &vecs.mds[i][0], mdOut.size()) != 0))
         {
             char msg[256];
@@ -162,7 +166,7 @@ TestResult TestSHA3512Short()
         vector<uint8_t> mdOut;
         sha3.Hash(vecs.msgs[i], mdOut);
 
-        if (mdOut.size() != vecs.mds[i][0] ||
+        if (mdOut.size() != vecs.mds[i].size() ||
             (memcmp(&mdOut[0], &vecs.mds[i][0], mdOut.size()) != 0))
         {
             char msg[256];
@@ -211,7 +215,7 @@ TestResult TestSHA3512Monte()
         vector<uint8_t> mdOut;
         sha3.Hash(msg, mdOut);
 
-        if (mdOut.size() != vecs.mds[i][0] ||
+        if (mdOut.size() != vecs.mds[i].size() ||
             (memcmp(&mdOut[0], &vecs.mds[i][0], mdOut.size()) != 0))
         {
             char msg[256];

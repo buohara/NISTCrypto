@@ -1,6 +1,6 @@
 #include "hash.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 static const uint64_t rcs[24] =
 {
@@ -49,13 +49,16 @@ void MsgStreamer::SetData(vector<uint8_t>& dataIn)
     const uint64_t rateBytes    = r / 8;
     uint64_t padBytes           = (rateBytes - dataIn.size() % rateBytes);
 
-    if (padBytes < 2)
+    if (padBytes == 0)
         padBytes += rateBytes;
 
     data.resize(dataIn.size() + padBytes);
 
-    data[dataIn.size()]         = 0x06;
-    data[data.size() - 1]       = 0x80;
+    if (dataIn.size())
+        memcpy(&data[0], &dataIn[0], dataIn.size());
+
+    data[dataIn.size()]         |= 0x06;
+    data[data.size() - 1]       |= 0x80;
 }
 
 /**
@@ -227,7 +230,7 @@ void SHA3::PrintState(PrintMode mode)
             printf("\n");
         }
 
-        //return;
+        return;
     }
 
     if (1)
@@ -248,7 +251,7 @@ void SHA3::PrintState(PrintMode mode)
         }
 
         printf("\n\n");
-        //return;
+        return;
     }
 }
 
@@ -348,7 +351,15 @@ void SHA3::SpongeSqueezeBlock(vector<uint8_t>& md)
     while (z.size() < digestBytes)
     {
         for (uint64_t i = 0; i < rateWords; i++)
-            z.push_back(state[i]);
+        {
+            for (uint64_t j = 0; j < 8; j++)
+            {
+                uint64_t byte   = state[i] & (0xFFLLU << (j * 8));
+                byte            >>= (j * 8);
+
+                z.push_back((uint8_t)byte);
+            }
+        }
 
         ApplyKeccak();
     }
