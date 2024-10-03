@@ -31,7 +31,10 @@ map<ResultCode, string> ResultCodeStrings =
 TestGroupList testGroups =
 {
     {
-        { "BigInt", "Arbitrary size integer unit tests." },
+        { 
+            "BigInt",
+            "Arbitrary size integer unit tests."
+        },
         {
             { "TestAssignBigInt",           TestAssignBigInt },
             { "TestCmpLShiftBigIntCorrect", TestCmpLShiftBigIntCorrect },
@@ -45,7 +48,10 @@ TestGroupList testGroups =
     },
 
     {
-        { "Diff", "File version diff and patch unit tests."},
+        { 
+            "Diff",
+            "File version diff and patch unit tests."
+        },
         {
             { "TestDiff",                   TestDiff },
             { "TestPatch",                  TestPatch },
@@ -53,7 +59,10 @@ TestGroupList testGroups =
     },
 
     {
-        { "Hash", "Hash algorithm unit tests." },
+        { 
+            "Hash",
+            "Hash algorithm unit tests."
+        },
         {
             //{ "TestSHA3512Long",            TestSHA3512Long },
             { "TestSHA3512Short",           TestSHA3512Short },
@@ -62,13 +71,19 @@ TestGroupList testGroups =
     },
 
     {
-        { "Compress", "Compression algorithm unit tests." },
+        { 
+            "Compress",
+            "Compression algorithm unit tests."
+        },
         {
         }
     },
 
     {
-        { "Encrypt", "Encryption algorithm unit tests." },
+        { 
+            "Encrypt",
+            "Encryption algorithm unit tests."
+        },
         {
         }
     }

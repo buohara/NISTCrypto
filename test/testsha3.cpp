@@ -209,11 +209,18 @@ TestResult TestSHA3512Monte()
 
     SHA3 sha3(SHA512);
     vector<uint8_t> msg = vecs.msgs[0];
+    vector<uint8_t> mdOut;
 
     for (uint64_t i = 0; i < vecs.mds.size(); i++)
     {
-        vector<uint8_t> mdOut;
-        sha3.Hash(msg, mdOut);
+        for (uint64_t j = 0; j < 1000; j++)
+        {
+            sha3.Hash(msg, mdOut);
+            msg = mdOut;
+            mdOut.resize(0);
+        }
+
+        mdOut = msg;
 
         if (mdOut.size() != vecs.mds[i].size() ||
             (memcmp(&mdOut[0], &vecs.mds[i][0], mdOut.size()) != 0))

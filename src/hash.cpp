@@ -1,6 +1,6 @@
 #include "hash.h"
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 static const uint64_t rcs[24] =
 {
@@ -521,5 +521,6 @@ void SHA3::Hash(vector<uint8_t>& data, vector<uint8_t>& md)
     }
 
     SpongeSqueezeBlock(md);
+    stream.Reset();
     return;
 }
