@@ -64,8 +64,17 @@ TestGroupList testGroups =
             "Hash algorithm unit tests."
         },
         {
-            //{ "TestSHA3512Long",            TestSHA3512Long },
+            { "TestSHA3224Short",           TestSHA3224Short },
+            { "TestSHA3224Long",            TestSHA3224Long },
+            { "TestSHA3224Monte",           TestSHA3224Monte },
+            { "TestSHA3256Short",           TestSHA3256Short },
+            { "TestSHA3256Long",            TestSHA3256Long },
+            { "TestSHA3256Monte",           TestSHA3256Monte },
+            { "TestSHA3384Short",           TestSHA3384Short },
+            { "TestSHA3384Long",            TestSHA3384Long },
+            { "TestSHA3384Monte",           TestSHA3384Monte },
             { "TestSHA3512Short",           TestSHA3512Short },
+            { "TestSHA3512Long",            TestSHA3512Long },
             { "TestSHA3512Monte",           TestSHA3512Monte }
         }
     },

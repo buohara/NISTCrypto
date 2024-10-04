@@ -1,6 +1,6 @@
 #include "hash.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 static const uint64_t rcs[24] =
 {

@@ -23,32 +23,35 @@ struct SHA3TestVecs
 /**
  * LoadTestVecsFromFile - Load known SHA3 messages and hash values
  * from a file.
- * 
+ *
  * @param file  [in]        Path to test vector file.
  * @param vects [in/out]    List of test vecs to populate.
- * 
+ *
  * @return  Pass if hash matches, fail otherwise.
  */
 
-void LoadTestVecsFromFile(const string file, SHA3TestVecs &vecs)
+static void LoadTestVecsFromFile(const string file, SHA3TestVecs& vecs)
 {
     assert(vecs.msgs.size() == 0 && vecs.mds.size() == 0);
-    
+
     FILE* pFile = fopen(file.c_str(), "r");
     assert(pFile != nullptr);
 
-    string patternMsg       = "^Msg = ([a-fA-F0-9]+)$";
-    string patternMD        = "^MD = ([a-fA-F0-9]+)$";
-    string patternSeed      = "^Seed = ([a-fA-F0-9]+)$";
-    string patternCount     = "^COUNT = ([a-fA-F0-9]+)$";
+    string patternMsg   = "^Msg = ([a-fA-F0-9]+)$";
+    string patternMD    = "^MD = ([a-fA-F0-9]+)$";
+    string patternSeed  = "^Seed = ([a-fA-F0-9]+)$";
+    string patternCount = "^COUNT = ([a-fA-F0-9]+)$";
+    string patternLen   = "^Len = ([0-9]+)$";
 
     regex reMsg(patternMsg);
     regex reMD(patternMD);
     regex reSeed(patternSeed);
     regex reCount(patternCount);
+    regex reLen(patternLen);
 
     char buf[32768];
     smatch match;
+    uint64_t len;
 
     while (fgets(buf, sizeof(buf), pFile) != NULL)
     {
@@ -60,10 +63,22 @@ void LoadTestVecsFromFile(const string file, SHA3TestVecs &vecs)
             vector<uint8_t> msg;
             StringToHexArray(match[1], msg, false);
 
-            while (msg.size() && msg[0] == 0)
-                msg.erase(msg.begin());
+            if (msg.size() != len / 8)
+            {
+                while (msg.size() && msg[0] == 0)
+                    msg.erase(msg.begin());
+            }
+
+            assert(msg.size() == len / 8);
+            len = 0;
 
             vecs.msgs.push_back(msg);
+            continue;
+        }
+
+        if (regex_search(line, match, reLen))
+        {
+            len = stoull(match[1]);
             continue;
         }
 
@@ -97,27 +112,26 @@ void LoadTestVecsFromFile(const string file, SHA3TestVecs &vecs)
 }
 
 /**
- * TestSHA3512Long - Compute a SHA3 hash for a long input and compare
- * against known value.
+ * RunSHA3MessageTest - Load test vectors and MDs from a test file. Hash the
+ * test vectors and compare against expected.
+ * 
+ * @param testVecFile   [in] Test vec file.
  *
- * @return  Pass if hash matches, fail otherwise.
+ * @return List of test results.
  */
 
-TestResult TestSHA3512Long()
+static TestResult RunSHA3MessageTest(string testVecFile, SHASize sz)
 {
     TestResult res;
     SHA3TestVecs vecs;
 
-    LoadTestVecsFromFile("test/sha-3bytetestvectors/SHA3_512LongMsg.rsp", vecs);
+    LoadTestVecsFromFile(testVecFile, vecs);
 
     for (uint64_t i = 0; i < vecs.msgs.size(); i++)
     {
-        SHA3 sha3(SHA512);
+        SHA3 sha3(sz);
         vector<uint8_t> mdOut;
         sha3.Hash(vecs.msgs[i], mdOut);
-
-        bool bSameSize  = (mdOut.size() == vecs.mds[i].size());
-        uint64_t mem    = memcmp(&mdOut[0], &vecs.mds[i][0], mdOut.size());
 
         if (mdOut.size() != vecs.mds[i].size() ||
             (memcmp(&mdOut[0], &vecs.mds[i][0], mdOut.size()) != 0))
@@ -132,7 +146,9 @@ TestResult TestSHA3512Long()
 
             sprintf(
                 msg,
-                "SHA3-512 long message test failed."
+                "SHA3 message test failed. Input file = %s, test ID = %llu",
+                testVecFile.c_str(),
+                i
             );
 
             res.caseResults.push_back({ FAIL, string(msg) });
@@ -147,72 +163,29 @@ TestResult TestSHA3512Long()
 }
 
 /**
- * TestSHA3512Short - Compute a SHA3 hash for a short input and compare
- * against known value.
+ * RunSHA3Monte - Load test vectors and MDs from a test file. Hash the
+ * test vectors and compare against expected.
  *
- * @return  Pass if hash matches, fail otherwise.
+ * @param testVecFile   [in] Test vec file.
+ *
+ * @return List of test results.
  */
 
-TestResult TestSHA3512Short()
+static TestResult RunSHA3Monte(string testVecFile, SHASize sz)
 {
     TestResult res;
     SHA3TestVecs vecs;
 
-    LoadTestVecsFromFile("test/sha-3bytetestvectors/SHA3_512ShortMsg.rsp", vecs);
+    LoadTestVecsFromFile(testVecFile, vecs);
 
-    for (uint64_t i = 0; i < vecs.msgs.size(); i++)
-    {
-        SHA3 sha3(SHA512);
-        vector<uint8_t> mdOut;
-        sha3.Hash(vecs.msgs[i], mdOut);
-
-        if (mdOut.size() != vecs.mds[i].size() ||
-            (memcmp(&mdOut[0], &vecs.mds[i][0], mdOut.size()) != 0))
-        {
-            char msg[256];
-
-            string mdOutStr;
-            HexArrayToString(mdOut, mdOutStr);
-
-            string hashExpStr;
-            HexArrayToString(vecs.mds[i], hashExpStr);
-
-            sprintf(
-                msg,
-                "SHA3-512 short message test failed."
-            );
-
-            res.caseResults.push_back({ FAIL, string(msg) });
-        }
-        else
-        {
-            res.caseResults.push_back({ PASS, "" });
-        }
-    }
-
-    return res;
-}
-
-/**
- * TestSHA3512Monte - Iteratively compute SHA3 hashes starting from an initial seed
- * and repeating for 100 rounds.
- *
- * @return  Pass if hashes match, fail otherwise.
- */
-
-TestResult TestSHA3512Monte()
-{
-    TestResult res;
-    SHA3TestVecs vecs;
-
-    LoadTestVecsFromFile("test/sha-3bytetestvectors/SHA3_512Monte.rsp", vecs);
-
-    SHA3 sha3(SHA512);
+    SHA3 sha3(sz);
     vector<uint8_t> msg = vecs.msgs[0];
     vector<uint8_t> mdOut;
 
     for (uint64_t i = 0; i < vecs.mds.size(); i++)
     {
+        mdOut.resize(0);
+
         for (uint64_t j = 0; j < 1000; j++)
         {
             sha3.Hash(msg, mdOut);
@@ -235,7 +208,9 @@ TestResult TestSHA3512Monte()
 
             sprintf(
                 msg,
-                "SHA3-512 Monte test failed."
+                "SHA3 message test failed. Input file = %s, test ID = %llu",
+                testVecFile.c_str(),
+                i
             );
 
             res.caseResults.push_back({ FAIL, string(msg) });
@@ -245,6 +220,231 @@ TestResult TestSHA3512Monte()
             res.caseResults.push_back({ PASS, "" });
         }
     }
+
+    return res;
+}
+
+/**
+ * TestSHA3224Short - Compute a SHA3 hash for a short input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA3224Short()
+{
+    SHA3TestVecs vecs;
+
+    TestResult res = RunSHA3MessageTest(
+        "test/sha-3bytetestvectors/SHA3_224ShortMsg.rsp",
+        SHA224
+    );
+
+    return res;
+}
+
+/**
+ * TestSHA3224Long - Compute a SHA3 hash for a long input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA3224Long()
+{
+    SHA3TestVecs vecs;
+
+    TestResult res = RunSHA3MessageTest(
+        "test/sha-3bytetestvectors/SHA3_224LongMsg.rsp",
+        SHA224
+    );
+
+    return res;
+}
+
+/**
+ * TestSHA3224Monte - Iteratively compute SHA3 hashes starting from an initial seed
+ * and repeating for 100 rounds.
+ *
+ * @return  Pass if hashes match, fail otherwise.
+ */
+
+TestResult TestSHA3224Monte()
+{
+    SHA3TestVecs vecs;
+
+    TestResult res = RunSHA3Monte(
+        "test/sha-3bytetestvectors/SHA3_224Monte.rsp",
+        SHA224
+    );
+
+    return res;
+}
+
+/**
+ * TestSHA3256Short - Compute a SHA3 hash for a short input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA3256Short()
+{
+    SHA3TestVecs vecs;
+
+    TestResult res = RunSHA3MessageTest(
+        "test/sha-3bytetestvectors/SHA3_256ShortMsg.rsp",
+        SHA256
+    );
+
+    return res;
+}
+
+/**
+ * TestSHA3256Long - Compute a SHA3 hash for a long input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA3256Long()
+{
+    SHA3TestVecs vecs;
+
+    TestResult res = RunSHA3MessageTest(
+        "test/sha-3bytetestvectors/SHA3_256LongMsg.rsp",
+        SHA256
+    );
+
+    return res;
+}
+
+/**
+ * TestSHA3256Monte - Iteratively compute SHA3 hashes starting from an initial seed
+ * and repeating for 100 rounds.
+ *
+ * @return  Pass if hashes match, fail otherwise.
+ */
+
+TestResult TestSHA3256Monte()
+{
+    SHA3TestVecs vecs;
+
+    TestResult res = RunSHA3Monte(
+        "test/sha-3bytetestvectors/SHA3_256Monte.rsp",
+        SHA256
+    );
+
+    return res;
+}
+
+/**
+ * TestSHA3384Short - Compute a SHA3 hash for a short input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA3384Short()
+{
+    SHA3TestVecs vecs;
+
+    TestResult res = RunSHA3MessageTest(
+        "test/sha-3bytetestvectors/SHA3_384ShortMsg.rsp",
+        SHA384
+    );
+
+    return res;
+}
+
+/**
+ * TestSHA3384Long - Compute a SHA3 hash for a long input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA3384Long()
+{
+    SHA3TestVecs vecs;
+
+    TestResult res = RunSHA3MessageTest(
+        "test/sha-3bytetestvectors/SHA3_384LongMsg.rsp",
+        SHA384
+    );
+
+    return res;
+}
+
+/**
+ * TestSHA3384Monte - Iteratively compute SHA3 hashes starting from an initial seed
+ * and repeating for 100 rounds.
+ *
+ * @return  Pass if hashes match, fail otherwise.
+ */
+
+TestResult TestSHA3384Monte()
+{
+    SHA3TestVecs vecs;
+
+    TestResult res = RunSHA3Monte(
+        "test/sha-3bytetestvectors/SHA3_384Monte.rsp",
+        SHA384
+    );
+
+    return res;
+}
+
+/**
+ * TestSHA3512Short - Compute a SHA3 hash for a short input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA3512Short()
+{
+    SHA3TestVecs vecs;
+
+    TestResult res = RunSHA3MessageTest(
+        "test/sha-3bytetestvectors/SHA3_512ShortMsg.rsp",
+        SHA512);
+
+    return res;
+}
+
+/**
+ * TestSHA3512Long - Compute a SHA3 hash for a long input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA3512Long()
+{
+    SHA3TestVecs vecs;
+
+    TestResult res = RunSHA3MessageTest(
+        "test/sha-3bytetestvectors/SHA3_512LongMsg.rsp",
+        SHA512);
+
+    return res;
+}
+
+/**
+ * TestSHA3512Monte - Iteratively compute SHA3 hashes starting from an initial seed
+ * and repeating for 100 rounds.
+ *
+ * @return  Pass if hashes match, fail otherwise.
+ */
+
+TestResult TestSHA3512Monte()
+{
+    SHA3TestVecs vecs;
+
+    TestResult res = RunSHA3Monte(
+        "test/sha-3bytetestvectors/SHA3_512Monte.rsp",
+        SHA512);
 
     return res;
 }
