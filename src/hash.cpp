@@ -31,90 +31,6 @@ static const uint64_t rcs[24] =
 };
 
 /**
- * MsgStreamer::SetData - Set data to be hashed in the message
- * streamer. The streamer feeds message blocks whose bit size is
- * the SHA3 rate (see FIPS 202. Rate = 1600 bits - 2 * capacity = 
- * 1600 - 2 * (output MD output length in bits)).
- * 
- * The FIPS 202 spec says messages are to be padded using the "Pad10*1" rule.
- * Official NIST test messages, however, add a 0x6 suffix after the last message bit.
- * No explanation for this discrepency has been given. For testing conformance, 
- * append 0x6 here.
- * 
- * @param dataIn    [in] Message data to be hashed as a little endian byte array.
- */
-
-void MsgStreamer::SetData(vector<uint8_t>& dataIn)
-{
-    const uint64_t rateBytes    = r / 8;
-    uint64_t padBytes           = (rateBytes - dataIn.size() % rateBytes);
-
-    if (padBytes == 0)
-        padBytes += rateBytes;
-
-    data.resize(dataIn.size() + padBytes);
-
-    if (dataIn.size())
-        memcpy(&data[0], &dataIn[0], dataIn.size());
-
-    data[dataIn.size()]         |= 0x06;
-    data[data.size() - 1]       |= 0x80;
-}
-
-/**
- * MsgStreamer::Reset - Reset the streamer to the beginning of the
- * message.
- */
-
-void MsgStreamer::Reset()
-{
-    offset = 0;
-}
-
-/**
- * MsgStreamer::Next - Get the next message block to feed into the
- * SHA3 sponge.
- *
- * @param blockOut    [in/out] 
- */
-
-void MsgStreamer::Next(vector<uint64_t>& blockOut)
-{
-    const uint64_t rateWords = r / 64;
-
-    assert(r != 0);
-    assert(blockOut.size() == rateWords);
-    assert(offset != data.size());
-
-    if (offset + 8 * rateWords <= data.size())
-    {
-        memcpy(&blockOut[0], &data[offset], 8 * rateWords);
-        offset += 8 * rateWords;
-    }
-    else
-    {
-        uint64_t rem = data.size() - offset;
-        memcpy(&blockOut[0], &data[offset], rem);
-        offset = data.size();
-    }
-}
-
-/**
- * MsgStreamer::End - Return true of input all message blocks have been
- * processed.
- *
- * @return True if at the end of the message, false otherwise.
- */
-
-bool MsgStreamer::End()
-{
-    if (offset == data.size())
-        return true;
-
-    return false;
-}
-
-/**
  * SHA3::Get - Get a value from the state array at specified
  * x, y, z indices.
  *
@@ -200,7 +116,7 @@ SHA3::SHA3(SHASize sz)
     params.w    = 64;
     params.l    = 6;
     params.n    = 12 + 2 * params.l;
-    stream      = MsgStreamer(params.r);
+    stream      = SHAStreamer(params.r);
 
     memset(state, 0, STATE_W * STATE_H * STATE_L / 8);
 }
@@ -499,16 +415,16 @@ void SHA3::Iota(uint64_t round)
 /**
  * SHA3::Hash - Apply a SHA3 hash to an input message.
  *
- * @param data    [in]      Input message to be hashed.
+ * @param msg     [in]      Input message to be hashed.
  * @param md      [in/out]  MD to populate as a byte vector. Assumed empty on input.
  */
 
-void SHA3::Hash(vector<uint8_t>& data, vector<uint8_t>& md)
+void SHA3::Hash(vector<uint8_t> &msg, vector<uint8_t> &md)
 {
     assert(md.size() == 0);
 
     ClearState();
-    stream.SetData(data);
+    stream.SetData(msg);
 
     vector<uint64_t> curBlock(params.r / 64);
     const uint64_t rateBytes = params.r / 8;

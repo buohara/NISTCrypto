@@ -1,6 +1,7 @@
 #pragma once
 
 #include "commoninc.h"
+#include "msgstreamer.h"
 
 using namespace std;
 
@@ -67,34 +68,18 @@ struct SHA3Params
     }
 };
 
-struct MsgStreamer
-{
-    uint64_t r;
-    uint64_t offset;
-
-    vector<uint8_t> data;
-
-    MsgStreamer() : r(0), offset(0) {}
-    MsgStreamer(uint64_t rIn) : r(rIn), offset(0) {};
-
-    void SetData(vector<uint8_t>& dataIn);
-    void Reset();
-    void Next(vector<uint64_t>& blockOut);
-    bool End();
-};
-
 struct SHA3
 {
     SHA3Params params;
     uint64_t state[STATE_W * STATE_H];
+    SHAStreamer stream;
 
-    MsgStreamer stream;
     SHA3(SHASize sz);
 
     void ClearState();
     void PrintState(PrintMode mode = XY);
 
-    void Hash(vector<uint8_t>& data, vector<uint8_t>& md);
+    void Hash(vector<uint8_t> &msg, vector<uint8_t> &md);
     void SpongeAbsorbBlock(vector<uint64_t> &block);
     void ApplyKeccak();
     void SpongeSqueezeBlock(vector<uint8_t>& md);
