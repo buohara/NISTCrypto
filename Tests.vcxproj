@@ -150,6 +150,7 @@
     <ClInclude Include="inc\test.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="test\testaes.cpp" />
     <ClCompile Include="test\testbigint.cpp" />
     <ClCompile Include="test\testdiff.cpp" />
     <ClCompile Include="test\testmain.cpp" />

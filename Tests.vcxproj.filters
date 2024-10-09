@@ -28,5 +28,8 @@
     <ClCompile Include="test\testsha3.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="test\testaes.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

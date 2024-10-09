@@ -11,24 +11,30 @@
  * No explanation for this discrepency has been given. For testing conformance,
  * append 0x6 here.
  *
- * @param dataIn    [in] Message data to be hashed as a little endian byte array.
+ * @param dataIn            [in] Message data to be hashed as a little endian byte array.
+ * @param bLittleEndian     [in] True if input data is in little endian order.
  */
 
-void SHAStreamer::SetData(vector<uint8_t>& dataIn)
+void SHAStreamer::SetData(vector<uint8_t>& dataIn, bool bLittleEndian)
 {
     const uint64_t rateBytes    = r / 8;
     uint64_t padBytes           = (rateBytes - dataIn.size() % rateBytes);
+    const uint64_t sizeIn       = dataIn.size();
 
     if (padBytes == 0)
         padBytes += rateBytes;
 
-    data.resize(dataIn.size() + padBytes);
+    data.resize(sizeIn + padBytes);
 
-    if (dataIn.size())
-        memcpy(&data[0], &dataIn[0], dataIn.size());
+    if (sizeIn)
+        if (bLittleEndian)
+            memcpy(&data[0], &dataIn[0], sizeIn);
+        else
+            for (uint64_t i = sizeIn; i-- > 0;)
+                data[sizeIn - i - 1] = dataIn[i];
 
-    data[dataIn.size()]     |= 0x06;
-    data[data.size() - 1]   |= 0x80;
+    data[sizeIn]        |= 0x06;
+    data[sizeIn - 1]    |= 0x80;
 }
 
 /**
@@ -89,19 +95,39 @@ bool SHAStreamer::End()
  * 16 byte blocks into encryption/decryption routines. Pad to 16 byte boundaries,
  * each pad byte is the number of pad bytes added.
  *
+ * @param dataIn            [in] Message data to encrypt.
+ * @param bLittleEndian     [in] True if input data is in little endian order.
+ * 
  * @return True if at the end of the message, false otherwise.
  */
 
-void AESStreamer::SetData(vector<uint8_t>& dataIn)
+void AESStreamer::SetData(const vector<uint8_t>& dataIn, bool bLittleEndian)
 {
     const uint32_t rateBytes    = 16;
-    const uint8_t padBytes      = (uint8_t)(rateBytes - dataIn.size() % rateBytes);
+    const uint32_t sizeIn       = dataIn.size();
+    const uint8_t padBytes      = (uint8_t)(sizeIn % rateBytes);
 
-    if (dataIn.size())
-        memcpy(&data[0], &dataIn[0], dataIn.size());
+    if (sizeIn)
+    {
+        data.resize(sizeIn + padBytes);
+        memcpy(&data[0], &dataIn[0], sizeIn);
+
+        uint32_t curVal = 0;
+
+        for (uint32_t i = 0; i < sizeIn; i += 4)
+        {
+            uint8_t tmp = data[i];
+            data[i]     = data[i + 3];
+            data[i + 3] = tmp;
+            
+            tmp         = data[i + 1];
+            data[i + 1] = data[i + 2];
+            data[i + 2] = tmp;
+        }
+    }
 
     for (uint32_t i = 0; i < padBytes; i++)
-        data.push_back(padBytes);
+        data[sizeIn + i] = padBytes;
 }
 
 /**

@@ -60,7 +60,7 @@ TestGroupList testGroups =
 
     {
         { 
-            "Hash",
+            "2 - Hash",
             "Hash algorithm unit tests."
         },
         {
@@ -91,9 +91,10 @@ TestGroupList testGroups =
     {
         { 
             "Encrypt",
-            "Encryption algorithm unit tests."
+            "Encryption algorithm unit tests for AES."
         },
         {
+            { "TestAESEncrypt",             TestAESEncrypt256ECB }
         }
     }
 };
@@ -260,7 +261,6 @@ static void LogMessage(const char* format, ...)
         printf("%s\n", msgBuf);
 
     va_end(args);
-
 }
 
 /**
@@ -275,6 +275,7 @@ static void LogMessage(const char* format, ...)
 void RunTests(TestArgs& args)
 {
     InitLogFile();
+    srand(time(nullptr));
 
     for (uint64_t i = 0; i < args.testIDs.size(); i++)
     {
@@ -315,6 +316,50 @@ void RunTests(TestArgs& args)
     }
 
     CloseLogFile();
+}
+
+/**
+ * GFMult - Multiply two 8-bit numbers as elements of GF(2^8) (see FIPS 197). Multiply
+ * the two 8-bit values as polynomials mod 2, then reduce by the irreducible/prime polynomial
+ * 0b100011011. This follows the iterative XTimes method outlined in FIPS 197.
+ *
+ * @param a [in] First factor.
+ * @param b [in] Second factor.
+ *
+ * @return Product of a and b over GF(2^8).
+ */
+
+static uint8_t GFMult(uint8_t a, uint8_t b)
+{
+    uint8_t tmpA            = a;
+    uint8_t tmpB            = b;
+    const uint8_t bitHi     = 0x80;
+    const uint8_t mod       = 0x1B;
+    uint8_t xTimes[8]       = { 0 };
+    uint8_t e               = 0;
+    uint8_t out             = 0;
+    xTimes[0]               = tmpA;
+
+    for (uint8_t i = 1; i < 8; i++)
+    {
+        if (tmpA & bitHi)
+            tmpA = (tmpA << 1) ^ mod;
+        else
+            tmpA <<= 1;
+
+        xTimes[i] = tmpA;
+    }
+
+    while (tmpB)
+    {
+        if (tmpB & 0x1)
+            out ^= xTimes[e];
+
+        e++;
+        tmpB >>= 1;
+    }
+
+    return out;
 }
 
 /**

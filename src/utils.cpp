@@ -151,3 +151,22 @@ uint8_t Parity(uint8_t val)
 
     return bitCount % 2;
 }
+
+/**
+ * GenKey - Return a **NON-SECURE** cryptographic key for testing algorithms.
+ * This routine uses srand to generate "random" bytes. However, the randonmess
+ * of srand is not considered strong enough for security applications.
+ *
+ * @param bitLen    [in]        Bit length of desired key.
+ * @param keyOut    [in/out]    Generated output key.
+ */
+
+void GenKey(const uint64_t bitLen, vector<uint8_t>& keyOut)
+{
+    assert((bitLen) % 8 == 0);
+    const uint64_t nBytes = bitLen / 8;
+    keyOut.resize(nBytes);
+
+    for (uint64_t i = 0; i < nBytes; i++)
+        keyOut[i] = rand() % 256;
+}

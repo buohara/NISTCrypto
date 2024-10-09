@@ -1,6 +1,7 @@
 #pragma once
 
 #include "commoninc.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -14,7 +15,7 @@ struct SHAStreamer
     SHAStreamer() : r(0), offset(0) {}
     SHAStreamer(uint64_t rIn) : r(rIn), offset(0) {};
 
-    void SetData(vector<uint8_t>& dataIn);
+    void SetData(vector<uint8_t>& dataIn, bool bLittleEndian = true);
     void Reset();
     void Next(vector<uint64_t>& blockOut);
     bool End();
@@ -27,7 +28,7 @@ struct AESStreamer
 
     AESStreamer() : offset(0) {};
 
-    void SetData(vector<uint8_t>& dataIn);
+    void SetData(const vector<uint8_t>& dataIn, bool bLittleEndian = true);
     void Reset();
     void Next(uint32_t block[4]);
     bool End();

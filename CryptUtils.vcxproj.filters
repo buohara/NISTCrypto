@@ -29,6 +29,9 @@
     <ClInclude Include="inc\utils.h">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="inc\msgstreamer.h">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\bigint.cpp">
@@ -47,6 +50,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\utils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\msgstreamer.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
