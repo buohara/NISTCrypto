@@ -41,6 +41,10 @@ struct AES
     void MixColumns();
     void AddRoundKey(const uint32_t round);
 
+    void InvSubBytes();
+    void InvShiftRows();
+    void InvMixColumns();
+
     void ExpandKey(const vector<uint32_t>& key);
 
     void Encrypt(const vector<uint8_t> &msgIn,

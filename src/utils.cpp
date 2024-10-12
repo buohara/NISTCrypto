@@ -101,7 +101,8 @@ void StringToHexArray(const string val, vector<uint8_t>& bytes, bool bLittleEndi
  * @param bLittleEndian [in]        Are input bytes stored LSB or MSB first.
  */
 
-void HexArrayToString(const vector<uint8_t>& bytes, string& out, bool bLittleEndian)
+void HexArrayToString(const vector<uint8_t>& bytes, string& out,
+    bool bLittleEndian)
 {
     if (out.size() != 0)
         throw invalid_argument("Expected output to be empty when converting hex to string.");

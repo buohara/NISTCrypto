@@ -35,6 +35,26 @@ static const uint32_t sbox[16][16] =
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 };
 
+static const uint32_t sboxInv[16][16] =
+{
+    0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
+    0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb,
+    0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e,
+    0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2, 0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25,
+    0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16, 0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92,
+    0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda, 0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84,
+    0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a, 0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06,
+    0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02, 0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b,
+    0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea, 0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73,
+    0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85, 0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e,
+    0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89, 0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b,
+    0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20, 0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4,
+    0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31, 0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f,
+    0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d, 0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef,
+    0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61,
+    0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
+};
+
 /**
  * GFMult - Multiply two 8-bit numbers as elements of GF(2^8) (see FIPS 197). Multiply
  * the two 8-bit values as polynomials mod 2, then reduce by the irreducible/prime polynomial 
@@ -152,7 +172,7 @@ void AES::PrintState()
     printf("%02x ",     (state[3] & 0x000000FF) >> 0);
     printf("%02x ",     (state[3] & 0x0000FF00) >> 8);
     printf("%02x ",     (state[3] & 0x00FF0000) >> 16);
-    printf("%02x\n",    (state[3] & 0xFF000000) >> 24);
+    printf("%02x\n\n",  (state[3] & 0xFF000000) >> 24);
 }
 
 /**
@@ -233,59 +253,62 @@ void AES::ShiftRows()
 
 void AES::MixColumns()
 {
-    uint32_t b1 = GFMult(0x02, BYTE32(state[0], 3)) ^ GFMult(0x03, BYTE32(state[0], 2)) ^ 
-        BYTE32(state[0], 1) ^ BYTE32(state[0], 0);
+    uint32_t b1 =   GFMult(0x02, BYTE32(state[0], 3)) ^ GFMult(0x03, BYTE32(state[0], 2)) ^ 
+                    BYTE32(state[0], 1) ^ BYTE32(state[0], 0);
 
-    uint32_t b2 = BYTE32(state[0], 3) ^ GFMult(0x02, BYTE32(state[0], 2)) ^ 
-        GFMult(0x03, BYTE32(state[0], 1)) ^ BYTE32(state[0], 0);
+    uint32_t b2 =   BYTE32(state[0], 3) ^ GFMult(0x02, BYTE32(state[0], 2)) ^ 
+                    GFMult(0x03, BYTE32(state[0], 1)) ^ BYTE32(state[0], 0);
 
-    uint32_t b3 = BYTE32(state[0], 3) ^ BYTE32(state[0], 2) ^
-        GFMult(0x02, BYTE32(state[0], 1)) ^ GFMult(0x03, BYTE32(state[0], 0));
+    uint32_t b3 =   BYTE32(state[0], 3) ^ BYTE32(state[0], 2) ^
+                    GFMult(0x02, BYTE32(state[0], 1)) ^ GFMult(0x03, BYTE32(state[0], 0));
 
-    uint32_t b4 = GFMult(0x03, BYTE32(state[0], 3)) ^ BYTE32(state[0], 2) ^ 
-        BYTE32(state[0], 1) ^ GFMult(0x02, BYTE32(state[0], 0));
+    uint32_t b4 =   GFMult(0x03, BYTE32(state[0], 3)) ^ BYTE32(state[0], 2) ^ 
+                    BYTE32(state[0], 1) ^ GFMult(0x02, BYTE32(state[0], 0));
 
     state[0] = b1 << 24 | b2 << 16 | b3 << 8 | b4;
 
-    b1 = GFMult(0x02, BYTE32(state[1], 3)) ^ GFMult(0x03, BYTE32(state[1], 2)) ^
-        BYTE32(state[1], 1) ^ BYTE32(state[1], 0);
 
-    b2 = BYTE32(state[1], 3) ^ GFMult(0x02, BYTE32(state[1], 2)) ^
-        GFMult(0x03, BYTE32(state[1], 1)) ^ BYTE32(state[1], 0);
+    b1 =            GFMult(0x02, BYTE32(state[1], 3)) ^ GFMult(0x03, BYTE32(state[1], 2)) ^
+                    BYTE32(state[1], 1) ^ BYTE32(state[1], 0);
 
-    b3 = BYTE32(state[1], 3) ^ BYTE32(state[1], 2) ^
-        GFMult(0x02, BYTE32(state[1], 1)) ^ GFMult(0x03, BYTE32(state[1], 0));
+    b2 =            BYTE32(state[1], 3) ^ GFMult(0x02, BYTE32(state[1], 2)) ^
+                    GFMult(0x03, BYTE32(state[1], 1)) ^ BYTE32(state[1], 0);
 
-    b4 = GFMult(0x03, BYTE32(state[1], 3)) ^ BYTE32(state[1], 2) ^
-        BYTE32(state[1], 1) ^ GFMult(0x02, BYTE32(state[1], 0));
+    b3 =            BYTE32(state[1], 3) ^ BYTE32(state[1], 2) ^
+                    GFMult(0x02, BYTE32(state[1], 1)) ^ GFMult(0x03, BYTE32(state[1], 0));
+
+    b4 =            GFMult(0x03, BYTE32(state[1], 3)) ^ BYTE32(state[1], 2) ^
+                    BYTE32(state[1], 1) ^ GFMult(0x02, BYTE32(state[1], 0));
 
     state[1] = b1 << 24 | b2 << 16 | b3 << 8 | b4;
 
-    b1 = GFMult(0x02, BYTE32(state[2], 3)) ^ GFMult(0x03, BYTE32(state[2], 2)) ^
-        BYTE32(state[2], 1) ^ BYTE32(state[2], 0);
 
-    b2 = BYTE32(state[2], 3) ^ GFMult(0x02, BYTE32(state[2], 2)) ^
-        GFMult(0x03, BYTE32(state[2], 1)) ^ BYTE32(state[2], 0);
+    b1 =            GFMult(0x02, BYTE32(state[2], 3)) ^ GFMult(0x03, BYTE32(state[2], 2)) ^
+                    BYTE32(state[2], 1) ^ BYTE32(state[2], 0);
 
-    b3 = BYTE32(state[2], 3) ^ BYTE32(state[2], 2) ^
-        GFMult(0x02, BYTE32(state[2], 1)) ^ GFMult(0x03, BYTE32(state[2], 0));
+    b2 =            BYTE32(state[2], 3) ^ GFMult(0x02, BYTE32(state[2], 2)) ^
+                    GFMult(0x03, BYTE32(state[2], 1)) ^ BYTE32(state[2], 0);
 
-    b4 = GFMult(0x03, BYTE32(state[2], 3)) ^ BYTE32(state[2], 2) ^
-        BYTE32(state[2], 1) ^ GFMult(0x02, BYTE32(state[2], 0));
+    b3 =            BYTE32(state[2], 3) ^ BYTE32(state[2], 2) ^
+                    GFMult(0x02, BYTE32(state[2], 1)) ^ GFMult(0x03, BYTE32(state[2], 0));
+
+    b4 =            GFMult(0x03, BYTE32(state[2], 3)) ^ BYTE32(state[2], 2) ^
+                    BYTE32(state[2], 1) ^ GFMult(0x02, BYTE32(state[2], 0));
 
     state[2] = b1 << 24 | b2 << 16 | b3 << 8 | b4;
 
-    b1 = GFMult(0x02, BYTE32(state[3], 3)) ^ GFMult(0x03, BYTE32(state[3], 2)) ^
-        BYTE32(state[3], 1) ^ BYTE32(state[3], 0);
 
-    b2 = BYTE32(state[3], 3) ^ GFMult(0x02, BYTE32(state[3], 2)) ^
-        GFMult(0x03, BYTE32(state[3], 1)) ^ BYTE32(state[3], 0);
+    b1 =            GFMult(0x02, BYTE32(state[3], 3)) ^ GFMult(0x03, BYTE32(state[3], 2)) ^
+                    BYTE32(state[3], 1) ^ BYTE32(state[3], 0);
 
-    b3 = BYTE32(state[3], 3) ^ BYTE32(state[3], 2) ^
-        GFMult(0x02, BYTE32(state[3], 1)) ^ GFMult(0x03, BYTE32(state[3], 0));
+    b2 =            BYTE32(state[3], 3) ^ GFMult(0x02, BYTE32(state[3], 2)) ^
+                    GFMult(0x03, BYTE32(state[3], 1)) ^ BYTE32(state[3], 0);
 
-    b4 = GFMult(0x03, BYTE32(state[3], 3)) ^ BYTE32(state[3], 2) ^
-        BYTE32(state[3], 1) ^ GFMult(0x02, BYTE32(state[3], 0));
+    b3 =            BYTE32(state[3], 3) ^ BYTE32(state[3], 2) ^
+                    GFMult(0x02, BYTE32(state[3], 1)) ^ GFMult(0x03, BYTE32(state[3], 0));
+
+    b4 =            GFMult(0x03, BYTE32(state[3], 3)) ^ BYTE32(state[3], 2) ^
+                    BYTE32(state[3], 1) ^ GFMult(0x02, BYTE32(state[3], 0));
 
     state[3] = b1 << 24 | b2 << 16 | b3 << 8 | b4;
 }
@@ -304,6 +327,130 @@ void AES::AddRoundKey(const uint32_t round)
     state[1] ^= w[offset + 1];
     state[2] ^= w[offset + 2];
     state[3] ^= w[offset + 3];
+}
+
+/**
+ * SBoxInv - Given an input 32-bit value, replace its bytes using
+ * an inverse lookup table.
+ *
+ * @param val   [in]    Value whose bytes are to be substituted.
+ */
+
+inline static uint32_t SBoxInv(uint32_t val)
+{
+    uint32_t tmp = 0;
+
+    tmp |= sboxInv[(val & 0x000000F0) >> 4][(val & 0x0000000F)];
+    tmp |= sboxInv[(val & 0x0000F000) >> 12][(val & 0x00000F00) >> 8] << 8;
+    tmp |= sboxInv[(val & 0x00F00000) >> 20][(val & 0x000F0000) >> 16] << 16;
+    tmp |= sboxInv[(val & 0xF0000000) >> 28][(val & 0x0F000000) >> 24] << 24;
+
+    return tmp;
+}
+
+/**
+ * AES::InvSubBytes - AES inverse round InvSubBytes. Do an inverse byte
+ * substituation using a lookup table.
+ */
+
+void AES::InvSubBytes()
+{
+    state[0] = SBoxInv(state[0]);
+    state[1] = SBoxInv(state[1]);
+    state[2] = SBoxInv(state[2]);
+    state[3] = SBoxInv(state[3]);
+}
+
+/**
+ * AES::InvShiftRows - AES inverse round InvShiftRows. Shift AES state
+ * rows back from the forward transformation.
+ */
+
+void AES::InvShiftRows()
+{
+    uint32_t tmp[4];
+
+    /*tmp[0] = (state[0] & 0xFF000000) | (state[1] & 0x00FF0000) | (state[2] & 0x0000FF00) | (state[3] & 0x000000FF);
+    tmp[1] = (state[1] & 0xFF000000) | (state[2] & 0x00FF0000) | (state[3] & 0x0000FF00) | (state[0] & 0x000000FF);
+    tmp[2] = (state[2] & 0xFF000000) | (state[3] & 0x00FF0000) | (state[0] & 0x0000FF00) | (state[1] & 0x000000FF);
+    tmp[3] = (state[3] & 0xFF000000) | (state[0] & 0x00FF0000) | (state[1] & 0x0000FF00) | (state[2] & 0x000000FF);*/
+
+    tmp[0] = (state[0] & 0xFF000000) | (state[1] & 0x000000FF) | (state[2] & 0x0000FF00) | (state[3] & 0x00FF0000);
+    tmp[1] = (state[1] & 0xFF000000) | (state[2] & 0x000000FF) | (state[3] & 0x0000FF00) | (state[0] & 0x00FF0000);
+    tmp[2] = (state[2] & 0xFF000000) | (state[3] & 0x000000FF) | (state[0] & 0x0000FF00) | (state[1] & 0x00FF0000);
+    tmp[3] = (state[3] & 0xFF000000) | (state[0] & 0x000000FF) | (state[1] & 0x0000FF00) | (state[2] & 0x00FF0000);
+
+    state[0] = tmp[0];
+    state[1] = tmp[1];
+    state[2] = tmp[2];
+    state[3] = tmp[3];
+}
+
+/**
+ * AES::InvMixColumns - AES inverse round InvMixColumns. Apply an inverse
+ * mix columns matrix.
+ */
+
+void AES::InvMixColumns()
+{
+    uint32_t b1 =   GFMult(0x0E, BYTE32(state[0], 3)) ^ GFMult(0x0B, BYTE32(state[0], 2)) ^
+                    GFMult(0x0D, BYTE32(state[0], 1)) ^ GFMult(0x09, BYTE32(state[0], 0));
+
+    uint32_t b2 =   GFMult(0x09, BYTE32(state[0], 3)) ^ GFMult(0x0E, BYTE32(state[0], 2)) ^
+                    GFMult(0x0B, BYTE32(state[0], 1)) ^ GFMult(0x0D, BYTE32(state[0], 0));
+
+    uint32_t b3 =   GFMult(0x0D, BYTE32(state[0], 3)) ^ GFMult(0x09, BYTE32(state[0], 2)) ^
+                    GFMult(0x0E, BYTE32(state[0], 1)) ^ GFMult(0x0B, BYTE32(state[0], 0));
+
+    uint32_t b4 =   GFMult(0x0B, BYTE32(state[0], 3)) ^ GFMult(0x0D, BYTE32(state[0], 2)) ^
+                    GFMult(0x09, BYTE32(state[0], 1)) ^ GFMult(0x0E, BYTE32(state[0], 0));
+
+    state[0] = b1 << 24 | b2 << 16 | b3 << 8 | b4;
+
+
+    b1 =            GFMult(0x0E, BYTE32(state[1], 3)) ^ GFMult(0x0B, BYTE32(state[1], 2)) ^
+                    GFMult(0x0D, BYTE32(state[1], 1)) ^ GFMult(0x09, BYTE32(state[1], 0));
+
+    b2 =            GFMult(0x09, BYTE32(state[1], 3)) ^ GFMult(0x0E, BYTE32(state[1], 2)) ^
+                    GFMult(0x0B, BYTE32(state[1], 1)) ^ GFMult(0x0D, BYTE32(state[1], 0));
+
+    b3 =            GFMult(0x0D, BYTE32(state[1], 3)) ^ GFMult(0x09, BYTE32(state[1], 2)) ^
+                    GFMult(0x0E, BYTE32(state[1], 1)) ^ GFMult(0x0B, BYTE32(state[1], 0));
+
+    b4 =            GFMult(0x0B, BYTE32(state[1], 3)) ^ GFMult(0x0D, BYTE32(state[1], 2)) ^
+                    GFMult(0x09, BYTE32(state[1], 1)) ^ GFMult(0x0E, BYTE32(state[1], 0));
+
+    state[1] = b1 << 24 | b2 << 16 | b3 << 8 | b4;
+
+
+    b1 =            GFMult(0x0E, BYTE32(state[2], 3)) ^ GFMult(0x0B, BYTE32(state[2], 2)) ^
+                    GFMult(0x0D, BYTE32(state[2], 1)) ^ GFMult(0x09, BYTE32(state[2], 0));
+
+    b2 =            GFMult(0x09, BYTE32(state[2], 3)) ^ GFMult(0x0E, BYTE32(state[2], 2)) ^
+                    GFMult(0x0B, BYTE32(state[2], 1)) ^ GFMult(0x0D, BYTE32(state[2], 0));
+
+    b3 =            GFMult(0x0D, BYTE32(state[2], 3)) ^ GFMult(0x09, BYTE32(state[2], 2)) ^
+                    GFMult(0x0E, BYTE32(state[2], 1)) ^ GFMult(0x0B, BYTE32(state[2], 0));
+
+    b4 =            GFMult(0x0B, BYTE32(state[2], 3)) ^ GFMult(0x0D, BYTE32(state[2], 2)) ^
+                    GFMult(0x09, BYTE32(state[2], 1)) ^ GFMult(0x0E, BYTE32(state[2], 0));
+
+    state[2] = b1 << 24 | b2 << 16 | b3 << 8 | b4;
+
+
+    b1 =            GFMult(0x0E, BYTE32(state[3], 3)) ^ GFMult(0x0B, BYTE32(state[3], 2)) ^
+                    GFMult(0x0D, BYTE32(state[3], 1)) ^ GFMult(0x09, BYTE32(state[3], 0));
+
+    b2 =            GFMult(0x09, BYTE32(state[3], 3)) ^ GFMult(0x0E, BYTE32(state[3], 2)) ^
+                    GFMult(0x0B, BYTE32(state[3], 1)) ^ GFMult(0x0D, BYTE32(state[3], 0));
+
+    b3 =            GFMult(0x0D, BYTE32(state[3], 3)) ^ GFMult(0x09, BYTE32(state[3], 2)) ^
+                    GFMult(0x0E, BYTE32(state[3], 1)) ^ GFMult(0x0B, BYTE32(state[3], 0));
+
+    b4 =            GFMult(0x0B, BYTE32(state[3], 3)) ^ GFMult(0x0D, BYTE32(state[3], 2)) ^
+                    GFMult(0x09, BYTE32(state[3], 1)) ^ GFMult(0x0E, BYTE32(state[3], 0));
+
+    state[3] = b1 << 24 | b2 << 16 | b3 << 8 | b4;
 }
 
 /**
@@ -343,7 +490,7 @@ void AES::ExpandKey(const vector<uint32_t>& key)
  *
  * @param msgIn     [in]        Message to be encrypted.
  * @param msgOut    [in/out]    Output encrypted message.
- * @param key       [in]        AES key to use for encryption.
+ * @param key       [in]        AES key for encryption.
  */
 
 void AES::Encrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut,
@@ -401,10 +548,54 @@ void AES::Encrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut,
  *
  * @param msgIn     [in]        Message to be decrypted.
  * @param msgOut    [in/out]    Output decrypted message.
- * @param key       [in]        AES key to use for decryption.
+ * @param key       [in]        AES key for decryption.
  */
 
 void AES::Decrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut, const vector<uint32_t>& key)
 {
+    assert(msgOut.size() == 0);
+    msgOut.resize(msgIn.size());
+    uint32_t offset = 0;
+
+    stream.SetData(msgIn, false);
     ExpandKey(key);
+
+    while (!stream.End())
+    {
+        ClearState();
+        uint32_t in[4];
+        stream.Next(in);
+
+        state[0] ^= in[0];
+        state[1] ^= in[1];
+        state[2] ^= in[2];
+        state[3] ^= in[3];
+
+        AddRoundKey(nr);
+        InvShiftRows();
+        InvSubBytes();
+
+        for (uint32_t i = nr; i-- >1;)
+        {
+            AddRoundKey(i);
+            InvMixColumns();
+            InvShiftRows();
+            InvSubBytes();
+        }
+
+        AddRoundKey(0);
+
+        memcpy(&msgOut[offset], state, 16);
+        offset += 16;
+    }
+
+    for (uint32_t i = 0; i < msgOut.size(); i += 4)
+    {
+        uint8_t tmp = msgOut[i];
+        msgOut[i] = msgOut[i + 3];
+        msgOut[i + 3] = msgOut[i + 1];
+        msgOut[i + 1] = msgOut[i + 2];
+        msgOut[i + 2] = msgOut[i + 3];
+        msgOut[i + 3] = tmp;
+    }
 }

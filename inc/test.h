@@ -47,3 +47,4 @@ TestResult TestSHA3512Long();
 TestResult TestSHA3512Monte();
 
 TestResult TestAESEncrypt256ECB();
+TestResult TestAESDecrypt256ECB();
