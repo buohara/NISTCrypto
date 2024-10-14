@@ -94,8 +94,12 @@ TestGroupList testGroups =
             "Encryption algorithm unit tests for AES."
         },
         {
-            { "TestAESEncrypt",             TestAESEncrypt256ECB },
-            { "TestAESDecrypt256ECB",       TestAESDecrypt256ECB }
+            { "TestAESEncrypt256ECB",       TestAESEncrypt256ECB },
+            { "TestAESDecrypt256ECB",       TestAESDecrypt256ECB },
+            { "TestAESEncrypt192ECB",       TestAESEncrypt192ECB },
+            { "TestAESDecrypt192ECB",       TestAESDecrypt192ECB },
+            { "TestAESEncrypt128ECB",       TestAESEncrypt128ECB },
+            { "TestAESDecrypt128ECB",       TestAESDecrypt128ECB },
         }
     }
 };

@@ -370,11 +370,6 @@ void AES::InvShiftRows()
 {
     uint32_t tmp[4];
 
-    /*tmp[0] = (state[0] & 0xFF000000) | (state[1] & 0x00FF0000) | (state[2] & 0x0000FF00) | (state[3] & 0x000000FF);
-    tmp[1] = (state[1] & 0xFF000000) | (state[2] & 0x00FF0000) | (state[3] & 0x0000FF00) | (state[0] & 0x000000FF);
-    tmp[2] = (state[2] & 0xFF000000) | (state[3] & 0x00FF0000) | (state[0] & 0x0000FF00) | (state[1] & 0x000000FF);
-    tmp[3] = (state[3] & 0xFF000000) | (state[0] & 0x00FF0000) | (state[1] & 0x0000FF00) | (state[2] & 0x000000FF);*/
-
     tmp[0] = (state[0] & 0xFF000000) | (state[1] & 0x000000FF) | (state[2] & 0x0000FF00) | (state[3] & 0x00FF0000);
     tmp[1] = (state[1] & 0xFF000000) | (state[2] & 0x000000FF) | (state[3] & 0x0000FF00) | (state[0] & 0x00FF0000);
     tmp[2] = (state[2] & 0xFF000000) | (state[3] & 0x000000FF) | (state[0] & 0x0000FF00) | (state[1] & 0x00FF0000);
