@@ -60,7 +60,7 @@ TestGroupList testGroups =
 
     {
         { 
-            "2 - Hash",
+            "Hash",
             "Hash algorithm unit tests."
         },
         {
@@ -90,16 +90,19 @@ TestGroupList testGroups =
 
     {
         { 
-            "Encrypt",
-            "Encryption algorithm unit tests for AES."
+            "Block Cipher",
+            "Block cipher unit tests for AES."
         },
         {
-            { "TestAESEncrypt256ECB",       TestAESEncrypt256ECB },
+            /*{ "TestAESEncrypt256ECB",       TestAESEncrypt256ECB },
             { "TestAESDecrypt256ECB",       TestAESDecrypt256ECB },
             { "TestAESEncrypt192ECB",       TestAESEncrypt192ECB },
             { "TestAESDecrypt192ECB",       TestAESDecrypt192ECB },
             { "TestAESEncrypt128ECB",       TestAESEncrypt128ECB },
-            { "TestAESDecrypt128ECB",       TestAESDecrypt128ECB },
+            { "TestAESDecrypt128ECB",       TestAESDecrypt128ECB },*/
+            { "TestAESEncrypt128CBC",       TestAESEncrypt128CBC },
+            { "TestAESEncrypt192CBC",       TestAESEncrypt192CBC },
+            { "TestAESEncrypt256CBC",       TestAESEncrypt256CBC }
         }
     }
 };

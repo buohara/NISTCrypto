@@ -382,6 +382,16 @@ void AES::InvShiftRows()
 }
 
 /**
+ * AES::SetIV - Set an initialization vector for
+ * CBC, CFB, and OFB modes.
+ */
+
+void AES::SetIV(const vector<uint32_t>& ivIn)
+{
+    iv = ivIn;
+}
+
+/**
  * AES::InvMixColumns - AES inverse round InvMixColumns. Apply an inverse
  * mix columns matrix.
  */
@@ -509,6 +519,14 @@ void AES::Encrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut,
         state[2] ^= in[2];
         state[3] ^= in[3];
 
+        if (mode == CBC || mode == OFB || mode == CFB)
+        {
+            state[0] ^= iv[0];
+            state[1] ^= iv[1];
+            state[2] ^= iv[2];
+            state[3] ^= iv[3];
+        }
+
         AddRoundKey(0);
 
         for (uint32_t i = 1; i < nr; i++)
@@ -524,6 +542,10 @@ void AES::Encrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut,
         AddRoundKey(nr);
 
         memcpy(&msgOut[offset], state, 16);
+
+        if (mode == CBC || mode == OFB || mode == CFB)
+            memcpy(&iv[0], &state[0], 16);
+
         offset += 16;
     }
 

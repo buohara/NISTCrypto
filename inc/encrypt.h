@@ -31,6 +31,8 @@ struct AES
 
     uint32_t w[64];
 
+    vector<uint32_t> iv;
+
     AES(AESSize sz, CipherMode modeIn);
 
     void ClearState();
@@ -45,6 +47,7 @@ struct AES
     void InvShiftRows();
     void InvMixColumns();
 
+    void SetIV(const vector<uint32_t>& iv);
     void ExpandKey(const vector<uint32_t>& key);
 
     void Encrypt(const vector<uint8_t> &msgIn,

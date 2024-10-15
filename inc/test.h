@@ -52,3 +52,7 @@ TestResult TestAESEncrypt192ECB();
 TestResult TestAESDecrypt192ECB();
 TestResult TestAESEncrypt256ECB();
 TestResult TestAESDecrypt256ECB();
+
+TestResult TestAESEncrypt128CBC();
+TestResult TestAESEncrypt192CBC();
+TestResult TestAESEncrypt256CBC();
