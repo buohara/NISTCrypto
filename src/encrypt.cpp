@@ -511,13 +511,13 @@ void AES::Encrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut,
     while (!stream.End())
     {
         ClearState();
-        uint32_t in[4];
-        stream.Next(in);
+        uint32_t plainTxt[4];
+        stream.Next(plainTxt);
 
-        state[0] ^= in[0];
-        state[1] ^= in[1];
-        state[2] ^= in[2];
-        state[3] ^= in[3];
+        state[0] ^= plainTxt[0];
+        state[1] ^= plainTxt[1];
+        state[2] ^= plainTxt[2];
+        state[3] ^= plainTxt[3];
 
         if (mode == CBC || mode == OFB || mode == CFB)
         {
@@ -580,13 +580,13 @@ void AES::Decrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut, const v
     while (!stream.End())
     {
         ClearState();
-        uint32_t in[4];
-        stream.Next(in);
+        uint32_t ciphTxt[4];
+        stream.Next(ciphTxt);
 
-        state[0] ^= in[0];
-        state[1] ^= in[1];
-        state[2] ^= in[2];
-        state[3] ^= in[3];
+        state[0] ^= ciphTxt[0];
+        state[1] ^= ciphTxt[1];
+        state[2] ^= ciphTxt[2];
+        state[3] ^= ciphTxt[3];
 
         AddRoundKey(nr);
         InvShiftRows();
@@ -601,6 +601,19 @@ void AES::Decrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut, const v
         }
 
         AddRoundKey(0);
+
+        if (mode == CBC || mode == OFB || mode == CFB)
+        {
+            state[0]    ^= iv[0];
+            state[1]    ^= iv[1];
+            state[2]    ^= iv[2];
+            state[3]    ^= iv[3];
+
+            iv[0]       = ciphTxt[0];
+            iv[1]       = ciphTxt[1];
+            iv[2]       = ciphTxt[2];
+            iv[3]       = ciphTxt[3];
+        }
 
         memcpy(&msgOut[offset], state, 16);
         offset += 16;
