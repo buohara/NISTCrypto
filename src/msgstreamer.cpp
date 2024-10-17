@@ -131,6 +131,16 @@ void AESStreamer::SetData(const vector<uint8_t>& dataIn, bool bLittleEndian)
 }
 
 /**
+ * AESStreamer::SetBitRate - Set the AES message streamer bit rate.
+ */
+
+void AESStreamer::SetBitRate(const uint32_t rateIn)
+{
+    assert(rateIn == 1 || rateIn == 8 || rateIn == 128);
+    r = rateIn;
+}
+
+/**
  * AESStreamer::Reset - Set the streamer back to the beginning of the message.
  */
 
@@ -140,14 +150,42 @@ void AESStreamer::Reset()
 }
 
 /**
- * AESStreamer::Next - Get the next 16 message bytes.
+ * AESStreamer::Next - Get the next r bits from the message stream.
  */
 
 void AESStreamer::Next(uint32_t block[4])
 {
-    assert((offset + 16) <= data.size());
-    memcpy(block, &data[offset], 16);
-    offset += 16;
+    assert((offset + r) <= (8 * data.size()));
+    
+    uint32_t byte   = 0;
+    uint32_t mask   = 0;
+    uint32_t shift  = 0;
+    uint32_t bit    = 0;
+
+    switch (r)
+    {
+        case 1:
+
+            byte        = offset / 8;
+            shift       = offset % 8;
+            mask        = 1LU << shift;
+            bit         = (data[byte] & mask) >> shift;
+            block[0]    = bit;
+
+            break;
+
+        case 8:
+
+            block[0] = data[offset];
+            break;
+
+        case 128:
+
+            memcpy(&block[0], &data[offset], 16);
+            break;
+    }
+
+    offset += r;
 }
 
 /**

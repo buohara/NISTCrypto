@@ -639,3 +639,54 @@ TestResult TestAESDecrypt256CBC()
 
     return res;
 }
+
+/**
+ * TestAESEncrypt256CFB1 - Encrypt plaintext with specified 256-bit key in
+ * cipher feedback mode (CFC) mode and compare against expected ciphertext.
+ *
+ * @return Pass if generated cipher text matches expected value.
+ */
+
+TestResult TestAESEncrypt256CFB1()
+{
+    TestResult res;
+
+    const vector<uint8_t> plainTxt =
+    {
+        0x83, 0xD6
+    };
+
+    const vector<uint32_t> key =
+    {
+        0x603deb10, 0x15ca71be, 0x2b73aef0, 0x857d7781,
+        0x1f352c07, 0x3b6108d7, 0x2d9810a3, 0x0914dff4
+    };
+
+    const vector<uint32_t> iv =
+    {
+        0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f
+    };
+
+    const vector<uint8_t> cipherTxtExp =
+    {
+        0x94, 0x09
+    };
+
+    vector<uint8_t> cipherTxtAct;
+
+    AES aes(AES256, CFB1);
+    aes.SetIV(iv);
+    aes.EncryptCFB(plainTxt, 1, cipherTxtAct, key);
+
+    if (cipherTxtAct.size() != cipherTxtExp.size() ||
+        (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
+    {
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+    }
+    else
+    {
+        res.caseResults.push_back({ PASS, "" });
+    }
+
+    return res;
+}

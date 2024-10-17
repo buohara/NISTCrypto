@@ -16,7 +16,9 @@ enum CipherMode
 {
     ECB,
     CBC,
-    CFB,
+    CFB1,
+    CFB8,
+    CFB128,
     OFB
 };
 
@@ -48,7 +50,9 @@ struct AES
     void InvMixColumns();
 
     void SetIV(const vector<uint32_t>& iv);
+    void RotateIVLeft(const uint32_t s);
     void ExpandKey(const vector<uint32_t>& key);
+    void WriteBits(const uint32_t s, vector<uint8_t> &msgOut, const uint32_t offset);
 
     void Encrypt(const vector<uint8_t> &msgIn,
         vector<uint8_t> &msgOut, const vector<uint32_t> &key
@@ -56,5 +60,13 @@ struct AES
 
     void Decrypt(const vector<uint8_t> &msgIn,
         vector<uint8_t> &msgOut, const vector<uint32_t> &key
+    );
+
+    void EncryptCFB(const vector<uint8_t>& msgIn, const uint32_t s,
+        vector<uint8_t>& msgOut, const vector<uint32_t>& key
+    );
+
+    void DecryptCFB(const vector<uint8_t>& msgIn, const uint32_t s,
+        vector<uint8_t>& msgOut, const vector<uint32_t>& key
     );
 };

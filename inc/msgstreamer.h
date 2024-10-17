@@ -24,11 +24,13 @@ struct SHAStreamer
 struct AESStreamer
 {
     uint32_t offset;
+    uint32_t r;
     vector<uint8_t> data;
 
-    AESStreamer() : offset(0) {};
+    AESStreamer() : offset(0), r(128) {};
 
     void SetData(const vector<uint8_t>& dataIn, bool bLittleEndian = true);
+    void SetBitRate(const uint32_t rateIn);
     void Reset();
     void Next(uint32_t block[4]);
     bool End();

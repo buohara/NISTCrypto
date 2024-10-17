@@ -129,6 +129,25 @@ AES::AES(AESSize sz, CipherMode modeIn) : w{0}, mode(modeIn)
             nk = 8;
             break;
     }
+
+    switch (mode)
+    {
+        case CFB1:
+
+            stream.SetBitRate(1);
+            break;
+
+        case CFB8:
+
+            stream.SetBitRate(8);
+            break;
+
+        case CFB128:
+        default:
+
+            stream.SetBitRate(128);
+            break;
+    }
 }
 
 /**
@@ -392,6 +411,35 @@ void AES::SetIV(const vector<uint32_t>& ivIn)
 }
 
 /**
+ * AES::RotateIVLeft - For CFB mode, plaintext/ciphertext are processed s bits
+ * at a time, with bits from prior input blocks rotated left s bits each
+ * iteration.
+ * 
+ * @param s [in]    Number of bits to rotate (support 1, 8, or 128 only).
+ */
+
+void AES::RotateIVLeft(const uint32_t s)
+{
+    assert(s == 1 || s == 8 || s == 128);
+
+    if (s == 128)
+    {
+        iv[3] = iv[1];
+        iv[2] = iv[0];
+        iv[1] = 0;
+        iv[2] = 0;
+    }
+    else
+    {
+        iv[0] <<= s;
+        iv[1] <<= s;
+        iv[2] <<= s;
+        iv[3] <<= s;
+    }
+
+}
+
+/**
  * AES::InvMixColumns - AES inverse round InvMixColumns. Apply an inverse
  * mix columns matrix.
  */
@@ -519,7 +567,7 @@ void AES::Encrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut,
         state[2] ^= plainTxt[2];
         state[3] ^= plainTxt[3];
 
-        if (mode == CBC || mode == OFB || mode == CFB)
+        if (mode == CBC)
         {
             state[0] ^= iv[0];
             state[1] ^= iv[1];
@@ -543,7 +591,7 @@ void AES::Encrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut,
 
         memcpy(&msgOut[offset], state, 16);
 
-        if (mode == CBC || mode == OFB || mode == CFB)
+        if (mode == CBC)
             memcpy(&iv[0], &state[0], 16);
 
         offset += 16;
@@ -557,6 +605,97 @@ void AES::Encrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut,
         msgOut[i + 1]   = msgOut[i + 2];
         msgOut[i + 2]   = msgOut[i + 3];
         msgOut[i + 3]   = tmp;
+    }
+}
+
+/**
+ * AES::WriteBits - Write s bits from the AES state to an output buffer.
+ *
+ * @param s         [in]        Number of bits to write. Supports 1, 8, or 128 bits.
+ * @param msgOut    [in/out]    Output buffer to write.
+ * @param offset    [in]        Offset into output buffer for writing in bits.
+ */
+
+void AES::WriteBits(const uint32_t s, vector<uint8_t>& msgOut, const uint32_t offset)
+{
+    assert(s == 1 || s == 8 || s == 128);
+    assert(offset <= 8 * msgOut.size());
+
+    if (s == 8 || s == 128)
+    {
+        const uint32_t offsetBytes = offset / 8;
+
+        if (s == 8)
+            msgOut[offsetBytes] = state[0];
+
+        if (s == 128)
+            memcpy(&msgOut[offsetBytes], &state[0], 16);
+    }
+    else
+    {
+        uint32_t byte   = offset / 8;
+        uint32_t shift  = offset % 8;
+        uint32_t mask   = 1LU << shift;
+        uint32_t bit    = (state[byte] & mask);;
+        msgOut[byte]    |= bit;
+    }
+}
+
+/**
+ * AES::Encrypt - Encrypt an input message using AES and a specified key.
+ *
+ * @param msgIn     [in]        Message to be encrypted.
+ * @param s         [in]        Plaintext segment size for CFB mode.
+ * @param msgOut    [in/out]    Output encrypted message.
+ * @param key       [in]        AES key for encryption.
+ */
+
+void AES::EncryptCFB(const vector<uint8_t>& msgIn, const uint32_t s, vector<uint8_t>& msgOut, const vector<uint32_t>& key)
+{
+    assert(msgOut.size() == 0);
+    assert(s == 1 || s == 8 || s == 128);
+
+    msgOut.resize(msgIn.size());
+    stream.SetData(msgIn, false);
+
+    ExpandKey(key);
+
+    uint32_t writeOffset = 0;
+
+    while (!stream.End())
+    {
+        ClearState();
+        uint32_t plainTxt[4];
+        stream.Next(plainTxt);
+
+        state[0] ^= iv[0];
+        state[1] ^= iv[1];
+        state[2] ^= iv[2];
+        state[3] ^= iv[3];
+
+        AddRoundKey(0);
+
+        for (uint32_t i = 1; i < nr; i++)
+        {
+            SubBytes();
+            ShiftRows();
+            MixColumns();
+            AddRoundKey(i);
+        }
+
+        SubBytes();
+        ShiftRows();
+        AddRoundKey(nr);
+
+        state[0] ^= plainTxt[0];
+        state[1] ^= plainTxt[1];
+        state[2] ^= plainTxt[2];
+        state[3] ^= plainTxt[3];
+
+        WriteBits(s, msgOut, writeOffset);
+        writeOffset += s;
+
+        RotateIVLeft(s);
     }
 }
 
@@ -602,7 +741,7 @@ void AES::Decrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut, const v
 
         AddRoundKey(0);
 
-        if (mode == CBC || mode == OFB || mode == CFB)
+        if (mode == CBC)
         {
             state[0]    ^= iv[0];
             state[1]    ^= iv[1];
@@ -621,11 +760,25 @@ void AES::Decrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut, const v
 
     for (uint32_t i = 0; i < msgOut.size(); i += 4)
     {
-        uint8_t tmp = msgOut[i];
-        msgOut[i] = msgOut[i + 3];
-        msgOut[i + 3] = msgOut[i + 1];
-        msgOut[i + 1] = msgOut[i + 2];
-        msgOut[i + 2] = msgOut[i + 3];
-        msgOut[i + 3] = tmp;
+        uint8_t tmp     = msgOut[i];
+        msgOut[i]       = msgOut[i + 3];
+        msgOut[i + 3]   = msgOut[i + 1];
+        msgOut[i + 1]   = msgOut[i + 2];
+        msgOut[i + 2]   = msgOut[i + 3];
+        msgOut[i + 3]   = tmp;
     }
+}
+
+/**
+ * AES::Encrypt - Encrypt an input message using AES and a specified key.
+ *
+ * @param msgIn     [in]        Message to be encrypted.
+ * @param s         [in]        Plaintext segment size for CFB mode.
+ * @param msgOut    [in/out]    Output encrypted message.
+ * @param key       [in]        AES key for encryption.
+ */
+
+void AES::DecryptCFB(const vector<uint8_t>& msgIn, const uint32_t s, vector<uint8_t>& msgOut, const vector<uint32_t>& key)
+{
+
 }
