@@ -100,13 +100,150 @@ static uint8_t GFMult(uint8_t a, uint8_t b)
 }
 
 /**
+ * AESStreamer::AESStreamer - Constructor. Initialize offset and bitrate based on
+ * AES mode.
+ *
+ * @param modeIn    [in] Input AES mode.
+ */
+
+AESStreamer::AESStreamer(AESMode modeIn) : bitOffset(0), mode(modeIn)
+{
+    switch (mode)
+    {
+        case CFB1:
+
+            r = 1;
+            break;
+
+        case CFB8:
+
+            r = 8;
+            break;
+
+        case CFB128:
+        case OFB:
+        case CBC:
+        case ECB:
+        default:
+
+            r = 128;
+            break;
+    }
+}
+
+/**
+ * AESStreamer::SetData - Set message data in the AES streamer. Pad data according
+ * to the bitrate set for the current AES mode.
+ *
+ * @param dataIn            [in] Message data to encrypt.
+ * @param bLittleEndian     [in] True if input data is in little endian order.
+ */
+
+void AESStreamer::SetData(const vector<uint8_t>& dataIn, bool bLittleEndian)
+{
+    const uint32_t rateBytes    = (r <= 8) ? 1 : 16;
+    const uint32_t sizeIn       = dataIn.size();
+    const uint8_t padBytes      = (uint8_t)(sizeIn % rateBytes);
+
+    if (sizeIn)
+    {
+        data.resize(sizeIn + padBytes);
+        memcpy(&data[0], &dataIn[0], sizeIn);
+
+        uint32_t curVal = 0;
+
+        if (sizeIn >= 4)
+        {
+            for (uint32_t i = 0; i < sizeIn; i += 4)
+            {
+                uint8_t tmp = data[i];
+                data[i] = data[i + 3];
+                data[i + 3] = tmp;
+
+                tmp = data[i + 1];
+                data[i + 1] = data[i + 2];
+                data[i + 2] = tmp;
+            }
+        }
+    }
+
+    for (uint32_t i = 0; i < padBytes; i++)
+        data[sizeIn + i] = padBytes;
+
+    Reset();
+}
+
+/**
+ * AESStreamer::Reset - Set the streamer back to the beginning of the message.
+ */
+
+void AESStreamer::Reset()
+{
+    bitOffset = 0;
+}
+
+/**
+ * AESStreamer::Next - Get the next r bits from the message stream.
+ */
+
+void AESStreamer::Next(uint32_t block[4])
+{
+    assert((bitOffset + r) <= (8 * data.size()));
+
+    uint32_t byte   = 0;
+    uint32_t mask   = 0;
+    uint32_t shift  = 0;
+    uint32_t bit    = 0;
+
+    switch (r)
+    {
+    case 1:
+
+        byte        = bitOffset / 8;
+        shift       = bitOffset % 8;
+        mask        = 1LU << shift;
+        bit         = (data[byte] & mask) >> shift;
+        block[0]    = bit;
+
+        break;
+
+    case 8:
+
+        block[0] = data[bitOffset / 8];
+        break;
+
+    case 128:
+
+        memcpy(&block[0], &data[bitOffset / 8], 16);
+        break;
+    }
+
+    bitOffset += r;
+}
+
+/**
+ * AESStreamer::End - Return true if input all message blocks have been
+ * processed.
+ *
+ * @return True if at the end of the message, false otherwise.
+ */
+
+bool AESStreamer::End()
+{
+    if (bitOffset == 8 * data.size())
+        return true;
+
+    return false;
+}
+
+/**
  * AES - Constructor. Takes an AES key size and sets number of rounds and
  * key expansion size.
  * 
  * @param sz [in]   AES key size to use.
  */
 
-AES::AES(AESSize sz, CipherMode modeIn) : w{0}, mode(modeIn)
+AES::AES(AESSize sz, AESMode modeIn) : w{0}, mode(modeIn), stream(modeIn)
 {
     switch (sz)
     {
@@ -127,25 +264,6 @@ AES::AES(AESSize sz, CipherMode modeIn) : w{0}, mode(modeIn)
 
             nr = 14;
             nk = 8;
-            break;
-    }
-
-    switch (mode)
-    {
-        case CFB1:
-
-            stream.SetBitRate(1);
-            break;
-
-        case CFB8:
-
-            stream.SetBitRate(8);
-            break;
-
-        case CFB128:
-        default:
-
-            stream.SetBitRate(128);
             break;
     }
 }
@@ -422,21 +540,51 @@ void AES::RotateIVLeft(const uint32_t s)
 {
     assert(s == 1 || s == 8 || s == 128);
 
-    if (s == 128)
+    if (s == 1)
     {
-        iv[3] = iv[1];
-        iv[2] = iv[0];
+        uint32_t hi1    = ((iv[0] & 0x80000000) >> 31);
+        uint32_t hi2    = 0;
+        iv[0]           <<= 1;
+
+        hi2     = ((iv[1] & 0x80000000) >> 31);
+        iv[1]   <<= 1;
+        iv[1]   |= hi1;
+        hi1     = hi2;
+
+        hi2     = ((iv[2] & 0x80000000) >> 31);
+        iv[2]   <<= 1;
+        iv[2]   |= hi1;
+        hi1     = hi2;
+
+        iv[3]   <<= 1;
+        iv[3]   |= hi1;
+    }
+    else if (s == 8)
+    {
+        uint32_t hi1    = ((iv[0] & 0xF0000000) >> 24);
+        uint32_t hi2    = 0;
+        iv[0]           <<= 8;
+
+        hi2     = ((iv[1] & 0xF0000000) >> 24);
+        iv[1]   <<= 8;
+        iv[1]   |= hi1;
+        hi1     = hi2;
+
+        hi2     = ((iv[2] & 0xF0000000) >> 24);
+        iv[2]   <<= 8;
+        iv[2]   |= hi1;
+        hi1     = hi2;
+
+        iv[3]   <<= 8;
+        iv[3]   |= hi1;
+    }
+    else if (s == 128)
+    {
+        iv[3] = 0;
+        iv[2] = 0;
         iv[1] = 0;
         iv[2] = 0;
     }
-    else
-    {
-        iv[0] <<= s;
-        iv[1] <<= s;
-        iv[2] <<= s;
-        iv[3] <<= s;
-    }
-
 }
 
 /**
@@ -539,21 +687,81 @@ void AES::ExpandKey(const vector<uint32_t>& key)
 }
 
 /**
- * AES::Encrypt - Encrypt an input message using AES and a specified key.
+ * AES::Encrypt - AES encryption entry. Route to the appropriate encryption routine based on
+ * AES mode.
  *
- * @param msgIn     [in]        Message to be encrypted.
- * @param msgOut    [in/out]    Output encrypted message.
- * @param key       [in]        AES key for encryption.
+ * @param plainTxtIn    [in]        Plaintext to be encrypted.
+ * @param ciphTxtOut    [in/out]    Output ciphertext.
+ * @param key           [in]        AES key for encryption.
  */
 
-void AES::Encrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut,
+void AES::Encrypt(const vector<uint8_t>& plainTxtIn, vector<uint8_t>& ciphTxtOut, const vector<uint32_t>& key)
+{
+    switch (mode)
+    {
+        case ECB:
+        case CBC:
+
+            EncryptECBCBC(plainTxtIn, ciphTxtOut, key);
+            break;
+
+        case CFB1:
+
+            EncryptCFB(plainTxtIn, 1, ciphTxtOut, key);
+            break;
+
+        default:
+
+            break;
+    }
+}
+
+/**
+ * AES::Encrypt - AES decryption entry. Route to the appropriate decryption routine based on
+ * AES mode.
+ * 
+ * @param ciphTxtIn     [in]        Ciphertext to be decrypted.
+ * @param plainTxtOut   [in/out]    Output plaintext.
+ * @param key           [in]        AES key for decryption.
+ */
+
+void AES::Decrypt(const vector<uint8_t>& ciphTxtIn, vector<uint8_t>& plainTxtOut, const vector<uint32_t>& key)
+{
+    switch (mode)
+    {
+    case ECB:
+    case CBC:
+
+        DecryptECBCBC(ciphTxtIn, plainTxtOut, key);
+        break;
+
+    case CFB1:
+
+        DecryptCFB(ciphTxtIn, 1, plainTxtOut, key);
+        break;
+
+    default:
+
+        break;
+    }
+}
+
+/**
+ * AES::EncryptECBCBC - Encrypt input plaintext in ECB or CBC modes.
+ *
+ * @param plainTxtIn    [in]        Plaintext to be encrypted.
+ * @param msgOut        [in/out]    Output ciphertext.
+ * @param key           [in]        AES key for encryption.
+ */
+
+void AES::EncryptECBCBC(const vector<uint8_t>& plainTxtIn, vector<uint8_t>& ciphTxtOut,
     const vector<uint32_t>& key)
 {
-    assert(msgOut.size() == 0);
-    msgOut.resize(msgIn.size());
+    assert(ciphTxtOut.size() == 0);
+    ciphTxtOut.resize(plainTxtIn.size());
     uint32_t offset = 0;
 
-    stream.SetData(msgIn, false);
+    stream.SetData(plainTxtIn, false);
     ExpandKey(key);
 
     while (!stream.End())
@@ -589,7 +797,7 @@ void AES::Encrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut,
         ShiftRows();
         AddRoundKey(nr);
 
-        memcpy(&msgOut[offset], state, 16);
+        memcpy(&ciphTxtOut[offset], state, 16);
 
         if (mode == CBC)
             memcpy(&iv[0], &state[0], 16);
@@ -597,23 +805,94 @@ void AES::Encrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut,
         offset += 16;
     }
 
-    for (uint32_t i = 0; i < msgOut.size(); i += 4)
+    for (uint32_t i = 0; i < ciphTxtOut.size(); i += 4)
     {
-        uint8_t tmp     = msgOut[i];
-        msgOut[i]       = msgOut[i + 3];
-        msgOut[i + 3]   = msgOut[i + 1];
-        msgOut[i + 1]   = msgOut[i + 2];
-        msgOut[i + 2]   = msgOut[i + 3];
-        msgOut[i + 3]   = tmp;
+        uint8_t tmp         = ciphTxtOut[i];
+        ciphTxtOut[i]       = ciphTxtOut[i + 3];
+        ciphTxtOut[i + 3]   = ciphTxtOut[i + 1];
+        ciphTxtOut[i + 1]   = ciphTxtOut[i + 2];
+        ciphTxtOut[i + 2]   = ciphTxtOut[i + 3];
+        ciphTxtOut[i + 3]   = tmp;
     }
 }
 
 /**
- * AES::WriteBits - Write s bits from the AES state to an output buffer.
+ * AES::DecryptECBCBC - Decrypt input ciphertext in ECB or CBC modes.
+ *
+ * @param ciphTxtIn     [in]        Ciphertext to be decrypted.
+ * @param plainTxtOut   [in/out]    Output plaintext.
+ * @param key           [in]        AES key for decryption.
+ */
+
+void AES::DecryptECBCBC(const vector<uint8_t>& ciphTxtIn, vector<uint8_t>& plainTxtOut,
+    const vector<uint32_t>& key)
+{
+    assert(plainTxtOut.size() == 0);
+    plainTxtOut.resize(ciphTxtIn.size());
+    uint32_t offset = 0;
+
+    stream.SetData(ciphTxtIn, false);
+    ExpandKey(key);
+
+    while (!stream.End())
+    {
+        ClearState();
+        uint32_t ciphTxt[4];
+        stream.Next(ciphTxt);
+
+        state[0] ^= ciphTxt[0];
+        state[1] ^= ciphTxt[1];
+        state[2] ^= ciphTxt[2];
+        state[3] ^= ciphTxt[3];
+
+        AddRoundKey(nr);
+        InvShiftRows();
+        InvSubBytes();
+
+        for (uint32_t i = nr; i-- > 1;)
+        {
+            AddRoundKey(i);
+            InvMixColumns();
+            InvShiftRows();
+            InvSubBytes();
+        }
+
+        AddRoundKey(0);
+
+        if (mode == CBC)
+        {
+            state[0] ^= iv[0];
+            state[1] ^= iv[1];
+            state[2] ^= iv[2];
+            state[3] ^= iv[3];
+
+            iv[0] = ciphTxt[0];
+            iv[1] = ciphTxt[1];
+            iv[2] = ciphTxt[2];
+            iv[3] = ciphTxt[3];
+        }
+
+        memcpy(&plainTxtOut[offset], state, 16);
+        offset += 16;
+    }
+
+    for (uint32_t i = 0; i < plainTxtOut.size(); i += 4)
+    {
+        uint8_t tmp         = plainTxtOut[i];
+        plainTxtOut[i]      = plainTxtOut[i + 3];
+        plainTxtOut[i + 3]  = plainTxtOut[i + 1];
+        plainTxtOut[i + 1]  = plainTxtOut[i + 2];
+        plainTxtOut[i + 2]  = plainTxtOut[i + 3];
+        plainTxtOut[i + 3]  = tmp;
+    }
+}
+
+/**
+ * AES::WriteBits - Helper for CFB mode. Write s MSB bits from the AES state to an output buffer.
  *
  * @param s         [in]        Number of bits to write. Supports 1, 8, or 128 bits.
  * @param msgOut    [in/out]    Output buffer to write.
- * @param offset    [in]        Offset into output buffer for writing in bits.
+ * @param offset    [in]        Output buffer write offset in bits.
  */
 
 void AES::WriteBits(const uint32_t s, vector<uint8_t>& msgOut, const uint32_t offset)
@@ -626,7 +905,7 @@ void AES::WriteBits(const uint32_t s, vector<uint8_t>& msgOut, const uint32_t of
         const uint32_t offsetBytes = offset / 8;
 
         if (s == 8)
-            msgOut[offsetBytes] = state[0];
+            msgOut[offsetBytes] = state[3];
 
         if (s == 128)
             memcpy(&msgOut[offsetBytes], &state[0], 16);
@@ -635,32 +914,104 @@ void AES::WriteBits(const uint32_t s, vector<uint8_t>& msgOut, const uint32_t of
     {
         uint32_t byte   = offset / 8;
         uint32_t shift  = offset % 8;
-        uint32_t mask   = 1LU << shift;
-        uint32_t bit    = (state[byte] & mask);;
-        msgOut[byte]    |= bit;
+        uint32_t bit    = ((state[0] & 0x80000000) >> 31);
+        msgOut[byte]    |= (bit << shift);
     }
 }
 
 /**
- * AES::Encrypt - Encrypt an input message using AES and a specified key.
+ * AES::UpdateInputBlock - Helper for CFB mode. After processing each chunk of s bits of plaintext,
+ * input blocks are shifted left by s bits and the s MSB bits of the previous iteration's ciphertext 
+ * are moved to the s LSB bits of input for the next round.
+ * 
+ * Move the s MSB bits of the previous iteration's ciphertext to the s LSB bits of the next
+ * iteration's input block here.
  *
- * @param msgIn     [in]        Message to be encrypted.
- * @param s         [in]        Plaintext segment size for CFB mode.
- * @param msgOut    [in/out]    Output encrypted message.
- * @param key       [in]        AES key for encryption.
+ * @param s     [in]    Number of ciphertext bits to add to the input block.
  */
 
-void AES::EncryptCFB(const vector<uint8_t>& msgIn, const uint32_t s, vector<uint8_t>& msgOut, const vector<uint32_t>& key)
+void AES::UpdateInputBlock(const uint32_t s)
 {
-    assert(msgOut.size() == 0);
     assert(s == 1 || s == 8 || s == 128);
 
-    msgOut.resize(msgIn.size());
-    stream.SetData(msgIn, false);
+    uint32_t update = 0;
 
+    switch (s)
+    {
+    case 1:
+
+        iv[3] &= 0xFFFFFFFE;
+        iv[3] |= ((state[0] & 0x80000000) >> 31);
+        break;
+
+    case 8:
+
+        iv[3] &= 0xFFFFFFF0;
+        iv[3] |= ((state[0] & 0xF0000000) >> 24);
+        break;
+
+    case 128:
+
+        memcpy(&iv[0], &state[0], 16);
+        break;
+    }
+}
+
+/**
+ * AES::XORPlainText - For CFB mode, XOR s bits from the plaintext into the AES
+ * after each cipher iteration.
+ *
+ * @param plainText     [in]    Plaintext to XOR.
+ * @param s             [in]    Number of bits to XOR from the plaintext.
+ */
+
+void AES::XORPlainText(uint32_t plainTxt[4], const uint32_t s)
+{
+    assert(s == 1 || s == 8 || s == 128);
+
+    switch (s)
+    {
+    case 1:
+
+        state[0] ^= (plainTxt[0] << 31);
+        break;
+
+    case 8:
+
+        state[0] ^= (plainTxt[0] << 24);
+        break;
+
+    case 128:
+
+        state[0] ^= plainTxt[0];
+        state[1] ^= plainTxt[1];
+        state[2] ^= plainTxt[2];
+        state[3] ^= plainTxt[3];
+        break;
+    }
+}
+
+/**
+ * AES::EncryptCFB - Encrypt input plaintext in CFB mode.
+ *
+ * @param plainTxt      [in]        Plaintext to be encrypted.
+ * @param s             [in]        Segment size for CFB mode.
+ * @param ciphTxtOut    [in/out]    Output ciphertext.
+ * @param key           [in]        AES key for encryption.
+ */
+
+void AES::EncryptCFB(const vector<uint8_t>& plainTxtIn, const uint32_t s, vector<uint8_t>& ciphTxtOut, 
+    const vector<uint32_t>& key)
+{
+    assert(ciphTxtOut.size() == 0);
+    assert(s == 1 || s == 8 || s == 128);
+
+    ciphTxtOut.resize(plainTxtIn.size());
+    stream.SetData(plainTxtIn, false);
     ExpandKey(key);
 
     uint32_t writeOffset = 0;
+    uint32_t segmentCtr = 1;
 
     while (!stream.End())
     {
@@ -686,99 +1037,28 @@ void AES::EncryptCFB(const vector<uint8_t>& msgIn, const uint32_t s, vector<uint
         SubBytes();
         ShiftRows();
         AddRoundKey(nr);
+        XORPlainText(plainTxt, s);
 
-        state[0] ^= plainTxt[0];
-        state[1] ^= plainTxt[1];
-        state[2] ^= plainTxt[2];
-        state[3] ^= plainTxt[3];
-
-        WriteBits(s, msgOut, writeOffset);
-        writeOffset += s;
-
+        WriteBits(s, ciphTxtOut, writeOffset);
         RotateIVLeft(s);
+        UpdateInputBlock(s);
+
+        writeOffset += s;
+        segmentCtr++;
     }
 }
 
 /**
- * AES::Decrypt - Decrypt an input message using AES and a specified key.
+ * AES::DecryptCFB - Decrypt input ciphertext in CFB mode
  *
- * @param msgIn     [in]        Message to be decrypted.
- * @param msgOut    [in/out]    Output decrypted message.
- * @param key       [in]        AES key for decryption.
+ * @param ciphTxtIn     [in]        Ciphertext to be decrypted.
+ * @param s             [in]        Segment size for CFB mode.
+ * @param plainTxtOut   [in/out]    Output plaintext.
+ * @param key           [in]        AES key for encryption.
  */
 
-void AES::Decrypt(const vector<uint8_t>& msgIn, vector<uint8_t>& msgOut, const vector<uint32_t>& key)
-{
-    assert(msgOut.size() == 0);
-    msgOut.resize(msgIn.size());
-    uint32_t offset = 0;
-
-    stream.SetData(msgIn, false);
-    ExpandKey(key);
-
-    while (!stream.End())
-    {
-        ClearState();
-        uint32_t ciphTxt[4];
-        stream.Next(ciphTxt);
-
-        state[0] ^= ciphTxt[0];
-        state[1] ^= ciphTxt[1];
-        state[2] ^= ciphTxt[2];
-        state[3] ^= ciphTxt[3];
-
-        AddRoundKey(nr);
-        InvShiftRows();
-        InvSubBytes();
-
-        for (uint32_t i = nr; i-- >1;)
-        {
-            AddRoundKey(i);
-            InvMixColumns();
-            InvShiftRows();
-            InvSubBytes();
-        }
-
-        AddRoundKey(0);
-
-        if (mode == CBC)
-        {
-            state[0]    ^= iv[0];
-            state[1]    ^= iv[1];
-            state[2]    ^= iv[2];
-            state[3]    ^= iv[3];
-
-            iv[0]       = ciphTxt[0];
-            iv[1]       = ciphTxt[1];
-            iv[2]       = ciphTxt[2];
-            iv[3]       = ciphTxt[3];
-        }
-
-        memcpy(&msgOut[offset], state, 16);
-        offset += 16;
-    }
-
-    for (uint32_t i = 0; i < msgOut.size(); i += 4)
-    {
-        uint8_t tmp     = msgOut[i];
-        msgOut[i]       = msgOut[i + 3];
-        msgOut[i + 3]   = msgOut[i + 1];
-        msgOut[i + 1]   = msgOut[i + 2];
-        msgOut[i + 2]   = msgOut[i + 3];
-        msgOut[i + 3]   = tmp;
-    }
-}
-
-/**
- * AES::Encrypt - Encrypt an input message using AES and a specified key.
- *
- * @param msgIn     [in]        Message to be encrypted.
- * @param s         [in]        Plaintext segment size for CFB mode.
- * @param msgOut    [in/out]    Output encrypted message.
- * @param key       [in]        AES key for encryption.
- */
-
-void AES::DecryptCFB(const vector<uint8_t>& msgIn, const uint32_t s, vector<uint8_t>& msgOut, const vector<uint32_t>& key)
+void AES::DecryptCFB(const vector<uint8_t>& ciphTxtIn, const uint32_t s, vector<uint8_t>& plainTxtOut,
+    const vector<uint32_t>& key)
 {
 
 }

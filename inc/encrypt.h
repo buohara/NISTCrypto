@@ -12,7 +12,7 @@ enum AESSize
     AES256
 };
 
-enum CipherMode
+enum AESMode
 {
     ECB,
     CBC,
@@ -22,11 +22,27 @@ enum CipherMode
     OFB
 };
 
+struct AESStreamer
+{
+    uint32_t bitOffset;
+    uint32_t r;
+    AESMode mode;
+    vector<uint8_t> data;
+
+    AESStreamer() : bitOffset(0), r(128), mode(ECB) {};
+    AESStreamer(AESMode modeIn);
+
+    void SetData(const vector<uint8_t>& dataIn, bool bLittleEndian = true);
+    void Reset();
+    void Next(uint32_t block[4]);
+    bool End();
+};
+
 struct AES
 {
     uint32_t state[4];
     AESStreamer stream;
-    CipherMode mode;
+    AESMode mode;
 
     uint32_t nk;
     uint32_t nr;
@@ -35,7 +51,7 @@ struct AES
 
     vector<uint32_t> iv;
 
-    AES(AESSize sz, CipherMode modeIn);
+    AES(AESSize sz, AESMode modeIn);
 
     void ClearState();
     void PrintState();
@@ -51,22 +67,34 @@ struct AES
 
     void SetIV(const vector<uint32_t>& iv);
     void RotateIVLeft(const uint32_t s);
+    void XORPlainText(uint32_t plainTxt[4], uint32_t s);
     void ExpandKey(const vector<uint32_t>& key);
     void WriteBits(const uint32_t s, vector<uint8_t> &msgOut, const uint32_t offset);
+    void UpdateInputBlock(const uint32_t s);
 
-    void Encrypt(const vector<uint8_t> &msgIn,
-        vector<uint8_t> &msgOut, const vector<uint32_t> &key
+    void Encrypt(const vector<uint8_t> &plainTxtIn,
+        vector<uint8_t> &ciphTxtOut, const vector<uint32_t> &key
     );
 
-    void Decrypt(const vector<uint8_t> &msgIn,
-        vector<uint8_t> &msgOut, const vector<uint32_t> &key
+    void Decrypt(const vector<uint8_t> &ciphTxtIn,
+        vector<uint8_t> &plainTxtOut, const vector<uint32_t> &key
     );
 
-    void EncryptCFB(const vector<uint8_t>& msgIn, const uint32_t s,
-        vector<uint8_t>& msgOut, const vector<uint32_t>& key
+private:
+
+    void EncryptECBCBC(const vector<uint8_t>& plainTxtIn,
+        vector<uint8_t>& ciphTxtOut, const vector<uint32_t>& key
     );
 
-    void DecryptCFB(const vector<uint8_t>& msgIn, const uint32_t s,
-        vector<uint8_t>& msgOut, const vector<uint32_t>& key
+    void DecryptECBCBC(const vector<uint8_t>& ciphTxtIn,
+        vector<uint8_t>& plainTxtOut, const vector<uint32_t>& key
+    );
+
+    void EncryptCFB(const vector<uint8_t>& plainTxtIn, const uint32_t s,
+        vector<uint8_t>& ciphTxtOut, const vector<uint32_t>& key
+    );
+
+    void DecryptCFB(const vector<uint8_t>& ciphTxtIn, const uint32_t s,
+        vector<uint8_t>& plainTxtOut, const vector<uint32_t>& key
     );
 };

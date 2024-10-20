@@ -653,7 +653,7 @@ TestResult TestAESEncrypt256CFB1()
 
     const vector<uint8_t> plainTxt =
     {
-        0x83, 0xD6
+        0xD6, 0x83
     };
 
     const vector<uint32_t> key =
@@ -676,7 +676,7 @@ TestResult TestAESEncrypt256CFB1()
 
     AES aes(AES256, CFB1);
     aes.SetIV(iv);
-    aes.EncryptCFB(plainTxt, 1, cipherTxtAct, key);
+    aes.Encrypt(plainTxt, cipherTxtAct, key);
 
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
