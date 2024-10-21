@@ -152,15 +152,15 @@ void AESStreamer::SetData(const vector<uint8_t>& dataIn, bool bLittleEndian)
 
         uint32_t curVal = 0;
 
-        if (sizeIn >= 4)
+        if (mode == ECB || mode == CBC)
         {
             for (uint32_t i = 0; i < sizeIn; i += 4)
             {
                 uint8_t tmp = data[i];
-                data[i] = data[i + 3];
+                data[i]     = data[i + 3];
                 data[i + 3] = tmp;
 
-                tmp = data[i + 1];
+                tmp         = data[i + 1];
                 data[i + 1] = data[i + 2];
                 data[i + 2] = tmp;
             }
@@ -561,16 +561,16 @@ void AES::RotateIVLeft(const uint32_t s)
     }
     else if (s == 8)
     {
-        uint32_t hi1    = ((iv[3] & 0xF0000000) >> 24);
+        uint32_t hi1    = ((iv[3] & 0xFF000000) >> 24);
         uint32_t hi2    = 0;
         iv[3]           <<= 8;
 
-        hi2     = ((iv[2] & 0xF0000000) >> 24);
+        hi2     = ((iv[2] & 0xFF000000) >> 24);
         iv[2]   <<= 8;
         iv[2]   |= hi1;
         hi1     = hi2;
 
-        hi2     = ((iv[1] & 0xF0000000) >> 24);
+        hi2     = ((iv[1] & 0xFF000000) >> 24);
         iv[1]   <<= 8;
         iv[1]   |= hi1;
         hi1     = hi2;
@@ -708,6 +708,11 @@ void AES::Encrypt(const vector<uint8_t>& plainTxtIn, vector<uint8_t>& ciphTxtOut
         case CFB1:
 
             EncryptCFB(plainTxtIn, 1, ciphTxtOut, key);
+            break;
+
+        case CFB8:
+
+            EncryptCFB(plainTxtIn, 8, ciphTxtOut, key);
             break;
 
         default:
@@ -905,7 +910,7 @@ void AES::WriteBits(const uint32_t s, vector<uint8_t>& msgOut, const uint32_t of
         const uint32_t offsetBytes = offset / 8;
 
         if (s == 8)
-            msgOut[offsetBytes] = state[3];
+            msgOut[offsetBytes] = ((state[0] & 0xFF000000) >> 24);
 
         if (s == 128)
             memcpy(&msgOut[offsetBytes], &state[0], 16);
@@ -947,7 +952,7 @@ void AES::UpdateInputBlock(const uint32_t s)
     case 8:
 
         iv[3] &= 0xFFFFFFF0;
-        iv[3] |= ((state[0] & 0xF0000000) >> 24);
+        iv[3] |= ((state[0] & 0xFF000000) >> 24);
         break;
 
     case 128:
@@ -1000,8 +1005,8 @@ void AES::XORPlainText(uint32_t plainTxt[4], const uint32_t s)
  * @param key           [in]        AES key for encryption.
  */
 
-void AES::EncryptCFB(const vector<uint8_t>& plainTxtIn, const uint32_t s, vector<uint8_t>& ciphTxtOut, 
-    const vector<uint32_t>& key)
+void AES::EncryptCFB(const vector<uint8_t>& plainTxtIn, const uint32_t s,
+    vector<uint8_t>& ciphTxtOut, const vector<uint32_t>& key)
 {
     assert(ciphTxtOut.size() == 0);
     assert(s == 1 || s == 8 || s == 128);
@@ -1011,7 +1016,6 @@ void AES::EncryptCFB(const vector<uint8_t>& plainTxtIn, const uint32_t s, vector
     ExpandKey(key);
 
     uint32_t writeOffset = 0;
-    uint32_t segmentCtr = 1;
 
     while (!stream.End())
     {
@@ -1044,7 +1048,6 @@ void AES::EncryptCFB(const vector<uint8_t>& plainTxtIn, const uint32_t s, vector
         UpdateInputBlock(s);
 
         writeOffset += s;
-        segmentCtr++;
     }
 }
 
@@ -1057,8 +1060,8 @@ void AES::EncryptCFB(const vector<uint8_t>& plainTxtIn, const uint32_t s, vector
  * @param key           [in]        AES key for encryption.
  */
 
-void AES::DecryptCFB(const vector<uint8_t>& ciphTxtIn, const uint32_t s, vector<uint8_t>& plainTxtOut,
-    const vector<uint32_t>& key)
+void AES::DecryptCFB(const vector<uint8_t>& ciphTxtIn, const uint32_t s,
+    vector<uint8_t>& plainTxtOut, const vector<uint32_t>& key)
 {
 
 }
