@@ -1,0 +1,210 @@
+================
+1 - Overview
+================
+
+Last Revision: 10/27/2024
+-------------------------
+
+The Cryptographic Algorithm Validation Program (CAVP) validates vendor
+implementations of NIST-approved cryptographic algorithms. The program validates
+the algorithms listed in section A below.
+
+This document enumerates the development and validation status of the algorithms 
+listed in section A below for the cryptographic component of the Handshake
+Project.
+
+------------------
+A - Algorithms
+------------------
+
+Block Ciphers
+=============
+
+- AES
+- TDES
+- SkipJack (Decryption only)
+
+Modes:
+
+- Electronic Codebook (ECB)
+- Cipher Block Chaining (CBC)
+- Cipher Feedback (CFB)
+- Output Feecback (OFB)
+
+Digital Signatures
+==================
+
+- DSA
+- ECDSA
+- RSA
+
+Key Derivation Functions (KDFs)
+===============================
+
+- KBKDF
+
+Key Management
+==============
+
+- KAS
+
+Message Authentication Codes (MACs)
+===================================
+
+- HMAC
+
+Random Number Generation (RNGs)
+===============================
+
+- DRBG
+
+Secure Hashing
+==============
+
+- SHA-1
+- SHA-2
+- SHA-3
+
+------------------
+B - Validation
+------------------
+
+Validation uses the Automated Cryptographic Validation Testing System (ACVTS).
+ACVTS is a server-based validation system. Clients register an Implementation
+Under Test (IUT), enumerating the cryptographic algorithms to be validated. 
+ACVTS returns request files with lists of test vectors for each algorithm
+enumerated by the IUT. IUTs then process test vectors and a return response file
+with required cryptographic outputs. Finally, ACVTS checks the outputs and
+returns a disposition (e.g., PASS). 
+
+The following status codes are used in this document:
+
+- N         Not Started
+- IPP       Implementation in Progress
+- IC        Implementation Complete
+- VP        Validation In Progress
+- VC        Valication Complete
+
+An asterisk (*) is a placeholder indicating all algorithm variants.
+
+Implementation is in C++ 14 on Windows 10 using the MSVC v143 toolchain. An
+IC status indicates an implementation that is ready to be validated against
+ACVTS. A status of VC indicates an implementation that has passed all
+ACVTS testing.
+
+==================================================
+2 - Algorithm Implementation/Validation Status
+==================================================
+
+=====================
+A - Block Ciphers
+=====================
+
+Cipher         Mode                 Key Length         Status
+------         ----                 ----------         ------
+
+AES            EBC - Encrypt        128                IC
+AES            EBC - Encrypt        192                IC
+AES            EBC - Encrypt        256                IC
+AES            EBC - Decrypt        128                IC
+AES            EBC - Decrypt        192                IC
+AES            EBC - Decrypt        256                IC
+
+AES            CBC - Encrypt        128                IC
+AES            CBC - Encrypt        192                IC
+AES            CBC - Encrypt        256                IC
+AES            CBC - Decrypt        128                IC
+AES            CBC - Decrypt        192                IC
+AES            CBC - Decrypt        256                IC
+
+AES            CFB1 - Encrypt       128                IC
+AES            CFB1 - Encrypt       192                IC
+AES            CFB1 - Encrypt       256                IC
+AES            CFB8 - Encrypt       128                IC
+AES            CFB8 - Encrypt       192                IC
+AES            CFB8 - Encrypt       256                IC
+AES            CFB128 - Encrypt     128                IPP
+AES            CFB128 - Encrypt     192                IPP
+AES            CFB128 - Encrypt     256                IPP
+
+AES            CFB* - Decrypt       *                  N
+AES            OFB*                 *                  N
+TDES*          *                    *                  N
+SkipJack*      *                    *                  N                    
+
+==========================
+B - Digital Signatures
+==========================
+
+Algorithm         Status
+---------         ------
+
+DSA*              N
+ECDSA*            N
+RSA*              N
+
+=======================================
+C - Key Derivation Functions (KDFs)
+=======================================
+
+Algorithm         Status
+---------         ------
+
+*KBKDF            N
+
+======================
+D - Key Management
+======================
+
+Algorithm         Status
+---------         ------
+
+*KAS              N
+
+Message Authentication Codes (MACs)
+===================================
+
+Algorithm         Status
+---------         ------
+
+*HMAC             N
+
+Random Number Generation (RNGs)
+===============================
+
+Algorithm         Status
+---------         ------
+
+*DRBG             N
+
+Secure Hashing
+==============
+
+Hash Function        Key Size        Status
+-------------        --------        ------
+
+SHA1*                *               N
+SHA2*                *               N
+SHA-3                224             IC
+SHA-3                256             IC
+SHA-3                384             IC
+SHA-3                512             IC
+
+=============================================
+3 - ACVTS Interface Implementation Status
+=============================================
+
+Status Codes:
+
+N           Not Started
+P           Pending
+C           Complete
+
+Item                                Status
+----                                ------
+
+ACVTS Demo Credential Request       N
+Registration File Interface         N
+Request File Interface              N
+Response File Interface             N
+Disposition File Interface          N

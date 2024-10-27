@@ -60,5 +60,14 @@ TestResult TestAESDecrypt128CBC();
 TestResult TestAESDecrypt192CBC();
 TestResult TestAESDecrypt256CBC();
 
+TestResult TestAESEncrypt128CFB1();
+TestResult TestAESEncrypt128CFB8();
+TestResult TestAESEncrypt128CFB128();
+
+TestResult TestAESEncrypt192CFB1();
+TestResult TestAESEncrypt192CFB8();
+TestResult TestAESEncrypt192CFB128();
+
 TestResult TestAESEncrypt256CFB1();
 TestResult TestAESEncrypt256CFB8();
+TestResult TestAESEncrypt256CFB128();

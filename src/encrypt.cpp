@@ -152,7 +152,7 @@ void AESStreamer::SetData(const vector<uint8_t>& dataIn, bool bLittleEndian)
 
         uint32_t curVal = 0;
 
-        if (mode == ECB || mode == CBC)
+        if (mode == ECB || mode == CBC || mode == CFB128)
         {
             for (uint32_t i = 0; i < sizeIn; i += 4)
             {
@@ -715,6 +715,11 @@ void AES::Encrypt(const vector<uint8_t>& plainTxtIn, vector<uint8_t>& ciphTxtOut
             EncryptCFB(plainTxtIn, 8, ciphTxtOut, key);
             break;
 
+        case CFB128:
+
+            EncryptCFB(plainTxtIn, 128, ciphTxtOut, key);
+            break;
+
         default:
 
             break;
@@ -743,6 +748,16 @@ void AES::Decrypt(const vector<uint8_t>& ciphTxtIn, vector<uint8_t>& plainTxtOut
     case CFB1:
 
         DecryptCFB(ciphTxtIn, 1, plainTxtOut, key);
+        break;
+
+    case CFB8:
+
+        DecryptCFB(ciphTxtIn, 8, plainTxtOut, key);
+        break;
+
+    case CFB128:
+
+        DecryptCFB(ciphTxtIn, 128, plainTxtOut, key);
         break;
 
     default:
@@ -913,7 +928,16 @@ void AES::WriteBits(const uint32_t s, vector<uint8_t>& msgOut, const uint32_t of
             msgOut[offsetBytes] = ((state[0] & 0xFF000000) >> 24);
 
         if (s == 128)
-            memcpy(&msgOut[offsetBytes], &state[0], 16);
+        {
+            uint32_t tmp[4];
+
+            tmp[0] = REVERSE_ENDIAN32(state[0]);
+            tmp[1] = REVERSE_ENDIAN32(state[1]);
+            tmp[2] = REVERSE_ENDIAN32(state[2]);
+            tmp[3] = REVERSE_ENDIAN32(state[3]);
+
+            memcpy(&msgOut[offsetBytes], &tmp[0], 16);
+        }
     }
     else
     {

@@ -641,8 +641,111 @@ TestResult TestAESDecrypt256CBC()
 }
 
 /**
+ * TestAESEncrypt128CFB1 - Encrypt plaintext with specified 128-bit key in
+ * cipher feedback mode (CFB) mode with segment size of 1 bit and compare against
+ * expected ciphertext.
+ *
+ * @return Pass if generated cipher text matches expected value.
+ */
+
+TestResult TestAESEncrypt128CFB1()
+{
+    TestResult res;
+
+    const vector<uint8_t> plainTxt =
+    {
+        0xD6, 0x83
+    };
+
+    const vector<uint32_t> key =
+    {
+        0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c
+    };
+
+    const vector<uint32_t> iv =
+    {
+        0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f
+    };
+
+    const vector<uint8_t> cipherTxtExp =
+    {
+        0x16, 0xCD
+    };
+
+    vector<uint8_t> cipherTxtAct;
+
+    AES aes(AES128, CFB1);
+    aes.SetIV(iv);
+    aes.Encrypt(plainTxt, cipherTxtAct, key);
+
+    if (cipherTxtAct.size() != cipherTxtExp.size() ||
+        (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
+    {
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+    }
+    else
+    {
+        res.caseResults.push_back({ PASS, "" });
+    }
+
+    return res;
+}
+
+/**
+ * TestAESEncrypt192CFB1 - Encrypt plaintext with specified 192-bit key in
+ * cipher feedback mode (CFB) mode with segment size of 1 bit and compare against
+ * expected ciphertext.
+ *
+ * @return Pass if generated cipher text matches expected value.
+ */
+
+TestResult TestAESEncrypt192CFB1()
+{
+    TestResult res;
+
+    const vector<uint8_t> plainTxt =
+    {
+        0xD6, 0x83
+    };
+
+    const vector<uint32_t> key =
+    {
+        0x8e73b0f7, 0xda0e6452, 0xc810f32b, 0x809079e5, 0x62f8ead2, 0x522c6b7b
+    };
+
+    const vector<uint32_t> iv =
+    {
+        0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f
+    };
+
+    const vector<uint8_t> cipherTxtExp =
+    {
+        0xC9, 0x9A
+    };
+
+    vector<uint8_t> cipherTxtAct;
+
+    AES aes(AES192, CFB1);
+    aes.SetIV(iv);
+    aes.Encrypt(plainTxt, cipherTxtAct, key);
+
+    if (cipherTxtAct.size() != cipherTxtExp.size() ||
+        (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
+    {
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+    }
+    else
+    {
+        res.caseResults.push_back({ PASS, "" });
+    }
+
+    return res;
+}
+
+/**
  * TestAESEncrypt256CFB1 - Encrypt plaintext with specified 256-bit key in
- * cipher feedback mode (CFC) mode and compare against expected ciphertext.
+ * cipher feedback mode (CFB) mode with segment size of 1 bit and compare against 
+ * expected ciphertext.
  *
  * @return Pass if generated cipher text matches expected value.
  */
@@ -692,8 +795,112 @@ TestResult TestAESEncrypt256CFB1()
 }
 
 /**
+ * TestAESEncrypt128CFB128 - Encrypt plaintext with specified 128-bit key in
+ * cipher feedback mode (CFB) mode and compare against expected ciphertext.
+ *
+ * @return Pass if generated cipher text matches expected value.
+ */
+
+TestResult TestAESEncrypt128CFB8()
+{
+    TestResult res;
+
+    const vector<uint8_t> plainTxt =
+    {
+        0x6B, 0xC1, 0xBE, 0xE2, 0x2E, 0x40, 0x9F, 0x96, 0xE9,
+        0x3D, 0x7E, 0x11, 0x73, 0x93, 0x17, 0x2A, 0xAE, 0x2D
+    };
+
+    const vector<uint32_t> key =
+    {
+        0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c
+    };
+
+    const vector<uint32_t> iv =
+    {
+        0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f
+    };
+
+    const vector<uint8_t> cipherTxtExp =
+    {
+        0x3B, 0x79, 0x42, 0x4C, 0x9C, 0x0D, 0xD4, 0x36, 0xBA,
+        0xCE, 0x9E, 0x0E, 0xD4, 0x58, 0x6A, 0x4F, 0x32, 0xB9
+    };
+
+    vector<uint8_t> cipherTxtAct;
+
+    AES aes(AES128, CFB8);
+    aes.SetIV(iv);
+    aes.Encrypt(plainTxt, cipherTxtAct, key);
+
+    if (cipherTxtAct.size() != cipherTxtExp.size() ||
+        (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
+    {
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+    }
+    else
+    {
+        res.caseResults.push_back({ PASS, "" });
+    }
+
+    return res;
+}
+
+/**
+ * TestAESEncrypt192CFB8 - Encrypt plaintext with specified 192-bit key in
+ * cipher feedback mode (CFB) mode and compare against expected ciphertext.
+ *
+ * @return Pass if generated cipher text matches expected value.
+ */
+
+TestResult TestAESEncrypt192CFB8()
+{
+    TestResult res;
+
+    const vector<uint8_t> plainTxt =
+    {
+        0x6B, 0xC1, 0xBE, 0xE2, 0x2E, 0x40, 0x9F, 0x96, 0xE9,
+        0x3D, 0x7E, 0x11, 0x73, 0x93, 0x17, 0x2A, 0xAE, 0x2D
+    };
+
+    const vector<uint32_t> key =
+    {
+        0x8e73b0f7, 0xda0e6452, 0xc810f32b, 0x809079e5, 0x62f8ead2, 0x522c6b7b
+    };
+
+    const vector<uint32_t> iv =
+    {
+        0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f
+    };
+
+    const vector<uint8_t> cipherTxtExp =
+    {
+        0xCD, 0xA2, 0x52, 0x1E, 0xF0, 0xA9, 0x05, 0xCA, 0x44,
+        0xCD, 0x05, 0x7C, 0xBF, 0x0D, 0x47, 0xA0, 0x67, 0x8A
+    };
+
+    vector<uint8_t> cipherTxtAct;
+
+    AES aes(AES192, CFB8);
+    aes.SetIV(iv);
+    aes.Encrypt(plainTxt, cipherTxtAct, key);
+
+    if (cipherTxtAct.size() != cipherTxtExp.size() ||
+        (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
+    {
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+    }
+    else
+    {
+        res.caseResults.push_back({ PASS, "" });
+    }
+
+    return res;
+}
+
+/**
  * TestAESEncrypt256CFB8 - Encrypt plaintext with specified 256-bit key in
- * cipher feedback mode (CFC) mode and compare against expected ciphertext.
+ * cipher feedback mode (CFB) mode and compare against expected ciphertext.
  *
  * @return Pass if generated cipher text matches expected value.
  */
@@ -704,7 +911,7 @@ TestResult TestAESEncrypt256CFB8()
 
     const vector<uint8_t> plainTxt =
     {
-        0x6B, 0xC1, 0xBE, 0xE2, 0x2E, 0x40, 0x9F, 0x96, 0xE9, 
+        0x6B, 0xC1, 0xBE, 0xE2, 0x2E, 0x40, 0x9F, 0x96, 0xE9,
         0x3D, 0x7E, 0x11, 0x73, 0x93, 0x17, 0x2A, 0xAE, 0x2D
     };
 
@@ -728,6 +935,175 @@ TestResult TestAESEncrypt256CFB8()
     vector<uint8_t> cipherTxtAct;
 
     AES aes(AES256, CFB8);
+    aes.SetIV(iv);
+    aes.Encrypt(plainTxt, cipherTxtAct, key);
+
+    if (cipherTxtAct.size() != cipherTxtExp.size() ||
+        (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
+    {
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+    }
+    else
+    {
+        res.caseResults.push_back({ PASS, "" });
+    }
+
+    return res;
+}
+
+/**
+ * TestAESEncrypt128CFB128 - Encrypt plaintext with specified 128-bit key in
+ * cipher feedback mode (CFB) mode and compare against expected ciphertext.
+ *
+ * @return Pass if generated cipher text matches expected value.
+ */
+
+TestResult TestAESEncrypt128CFB128()
+{
+    TestResult res;
+
+    const vector<uint8_t> plainTxt =
+    {
+        0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a,
+        0xae, 0x2d, 0x8a, 0x57, 0x1e, 0x03, 0xac, 0x9c, 0x9e, 0xb7, 0x6f, 0xac, 0x45, 0xaf, 0x8e, 0x51,
+        0x30, 0xc8, 0x1c, 0x46, 0xa3, 0x5c, 0xe4, 0x11, 0xe5, 0xfb, 0xc1, 0x19, 0x1a, 0x0a, 0x52, 0xef,
+        0xf6, 0x9f, 0x24, 0x45, 0xdf, 0x4f, 0x9b, 0x17, 0xad, 0x2b, 0x41, 0x7b, 0xe6, 0x6c, 0x37, 0x10
+    };
+
+    const vector<uint32_t> key =
+    {
+        0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c
+    };
+
+    const vector<uint32_t> iv =
+    {
+        0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f
+    };
+
+    const vector<uint8_t> cipherTxtExp =
+    {
+        0x3b, 0x3f, 0xd9, 0x2e, 0xb7, 0x2d, 0xad, 0x20, 0x33, 0x34, 0x49, 0xf8, 0xe8, 0x3c, 0xfb, 0x4a,
+        0xc8, 0xa6, 0x45, 0x37, 0xa0, 0xb3, 0xa9, 0x3f, 0xcd, 0xe3, 0xcd, 0xad, 0x9f, 0x1c, 0xe5, 0x8b,
+        0x26, 0x75, 0x1f, 0x67, 0xa3, 0xcb, 0xb1, 0x40, 0xb1, 0x80, 0x8c, 0xf1, 0x87, 0xa4, 0xf4, 0xdf,
+        0xc0, 0x4b, 0x05, 0x35, 0x7c, 0x5d, 0x1c, 0x0e, 0xea, 0xc4, 0xc6, 0x6f, 0x9f, 0xf7, 0xf2, 0xe6
+    };
+
+    vector<uint8_t> cipherTxtAct;
+
+    AES aes(AES128, CFB128);
+    aes.SetIV(iv);
+    aes.Encrypt(plainTxt, cipherTxtAct, key);
+
+    if (cipherTxtAct.size() != cipherTxtExp.size() ||
+        (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
+    {
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+    }
+    else
+    {
+        res.caseResults.push_back({ PASS, "" });
+    }
+
+    return res;
+}
+
+/**
+ * TestAESEncrypt192CFB128 - Encrypt plaintext with specified 192-bit key in
+ * cipher feedback mode (CFB) mode and compare against expected ciphertext.
+ *
+ * @return Pass if generated cipher text matches expected value.
+ */
+
+TestResult TestAESEncrypt192CFB128()
+{
+    TestResult res;
+
+    const vector<uint8_t> plainTxt =
+    {
+        0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a,
+        0xae, 0x2d, 0x8a, 0x57, 0x1e, 0x03, 0xac, 0x9c, 0x9e, 0xb7, 0x6f, 0xac, 0x45, 0xaf, 0x8e, 0x51,
+        0x30, 0xc8, 0x1c, 0x46, 0xa3, 0x5c, 0xe4, 0x11, 0xe5, 0xfb, 0xc1, 0x19, 0x1a, 0x0a, 0x52, 0xef,
+        0xf6, 0x9f, 0x24, 0x45, 0xdf, 0x4f, 0x9b, 0x17, 0xad, 0x2b, 0x41, 0x7b, 0xe6, 0x6c, 0x37, 0x10
+    };
+
+    const vector<uint32_t> key =
+    {
+        0x8e73b0f7, 0xda0e6452, 0xc810f32b, 0x809079e5, 0x62f8ead2, 0x522c6b7b
+    };
+
+    const vector<uint32_t> iv =
+    {
+        0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f
+    };
+
+    const vector<uint8_t> cipherTxtExp =
+    {
+        0xcd, 0xc8, 0x0d, 0x6f, 0xdd, 0xf1, 0x8c, 0xab, 0x34, 0xc2, 0x59, 0x09, 0xc9, 0x9a, 0x41, 0x74,
+        0x67, 0xce, 0x7f, 0x7f, 0x81, 0x17, 0x36, 0x21, 0x96, 0x1a, 0x2b, 0x70, 0x17, 0x1d, 0x3d, 0x7a,
+        0x2e, 0x1e, 0x8a, 0x1d, 0xd5, 0x9b, 0x88, 0xb1, 0xc8, 0xe6, 0x0f, 0xed, 0x1e, 0xfa, 0xc4, 0xc9,
+        0xc0, 0x5f, 0x9f, 0x9c, 0xa9, 0x83, 0x4f, 0xa0, 0x42, 0xae, 0x8f, 0xba, 0x58, 0x4b, 0x09, 0xff
+    };
+
+    vector<uint8_t> cipherTxtAct;
+
+    AES aes(AES192, CFB128);
+    aes.SetIV(iv);
+    aes.Encrypt(plainTxt, cipherTxtAct, key);
+
+    if (cipherTxtAct.size() != cipherTxtExp.size() ||
+        (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
+    {
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+    }
+    else
+    {
+        res.caseResults.push_back({ PASS, "" });
+    }
+
+    return res;
+}
+
+/**
+ * TestAESEncrypt256CFB8 - Encrypt plaintext with specified 256-bit key in
+ * cipher feedback mode (CFB) mode and compare against expected ciphertext.
+ *
+ * @return Pass if generated cipher text matches expected value.
+ */
+
+TestResult TestAESEncrypt256CFB128()
+{
+    TestResult res;
+
+    const vector<uint8_t> plainTxt =
+    {
+        0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a,
+        0xae, 0x2d, 0x8a, 0x57, 0x1e, 0x03, 0xac, 0x9c, 0x9e, 0xb7, 0x6f, 0xac, 0x45, 0xaf, 0x8e, 0x51,
+        0x30, 0xc8, 0x1c, 0x46, 0xa3, 0x5c, 0xe4, 0x11, 0xe5, 0xfb, 0xc1, 0x19, 0x1a, 0x0a, 0x52, 0xef,
+        0xf6, 0x9f, 0x24, 0x45, 0xdf, 0x4f, 0x9b, 0x17, 0xad, 0x2b, 0x41, 0x7b, 0xe6, 0x6c, 0x37, 0x10
+    };
+
+    const vector<uint32_t> key =
+    {
+        0x603deb10, 0x15ca71be, 0x2b73aef0, 0x857d7781,
+        0x1f352c07, 0x3b6108d7, 0x2d9810a3, 0x0914dff4
+    };
+
+    const vector<uint32_t> iv =
+    {
+        0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f
+    };
+
+    const vector<uint8_t> cipherTxtExp =
+    {
+        0xdc, 0x7e, 0x84, 0xbf, 0xda, 0x79, 0x16, 0x4b, 0x7e, 0xcd, 0x84, 0x86, 0x98, 0x5d, 0x38, 0x60,
+        0x39, 0xff, 0xed, 0x14, 0x3b, 0x28, 0xb1, 0xc8, 0x32, 0x11, 0x3c, 0x63, 0x31, 0xe5, 0x40, 0x7b,
+        0xdf, 0x10, 0x13, 0x24, 0x15, 0xe5, 0x4b, 0x92, 0xa1, 0x3e, 0xd0, 0xa8, 0x26, 0x7a, 0xe2, 0xf9,
+        0x75, 0xa3, 0x85, 0x74, 0x1a, 0xb9, 0xce, 0xf8, 0x20, 0x31, 0x62, 0x3d, 0x55, 0xb1, 0xe4, 0x71
+    };
+
+    vector<uint8_t> cipherTxtAct;
+
+    AES aes(AES256, CFB128);
     aes.SetIV(iv);
     aes.Encrypt(plainTxt, cipherTxtAct, key);
 
