@@ -105,7 +105,7 @@ TestGroupList testGroups =
             { "TestAESEncrypt256CBC",       TestAESEncrypt256CBC },
             { "TestAESDecrypt128CBC",       TestAESDecrypt128CBC },
             { "TestAESDecrypt192CBC",       TestAESDecrypt192CBC },
-            { "TestAESDecrypt256CBC",       TestAESDecrypt256CBC },*/
+            { "TestAESDecrypt256CBC",       TestAESDecrypt256CBC },
             { "TestAESEncrypt128CFB1",      TestAESEncrypt128CFB1 },
             { "TestAESEncrypt128CFB8",      TestAESEncrypt128CFB8 },
             { "TestAESEncrypt128CFB128",    TestAESEncrypt128CFB128 },
@@ -114,7 +114,8 @@ TestGroupList testGroups =
             { "TestAESEncrypt192CFB128",    TestAESEncrypt192CFB128 },
             { "TestAESEncrypt256CFB1",      TestAESEncrypt256CFB1 },
             { "TestAESEncrypt256CFB8",      TestAESEncrypt256CFB8 },
-            { "TestAESEncrypt256CFB128",    TestAESEncrypt256CFB128 }
+            { "TestAESEncrypt256CFB128",    TestAESEncrypt256CFB128 },*/
+            { "TestAESDecrypt256CFB1",      TestAESDecrypt256CFB1 }
         }
     }
 };

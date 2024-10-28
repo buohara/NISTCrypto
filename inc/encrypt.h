@@ -67,7 +67,7 @@ struct AES
 
     void SetIV(const vector<uint32_t>& iv);
     void RotateIVLeft(const uint32_t s);
-    void XORPlainText(uint32_t plainTxt[4], uint32_t s);
+    void XORText(uint32_t txt[4], uint32_t s);
     void ExpandKey(const vector<uint32_t>& key);
     void WriteBits(const uint32_t s, vector<uint8_t> &msgOut, const uint32_t offset);
     void UpdateInputBlock(const uint32_t s);

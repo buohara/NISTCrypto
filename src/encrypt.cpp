@@ -987,14 +987,14 @@ void AES::UpdateInputBlock(const uint32_t s)
 }
 
 /**
- * AES::XORPlainText - For CFB mode, XOR s bits from the plaintext into the AES
+ * AES::XORPlainText - For CFB mode, XOR s bits of text into the AES
  * after each cipher iteration.
  *
- * @param plainText     [in]    Plaintext to XOR.
- * @param s             [in]    Number of bits to XOR from the plaintext.
+ * @param text      [in]    Plaintext to XOR.
+ * @param s         [in]    Number of bits to XOR from the text.
  */
 
-void AES::XORPlainText(uint32_t plainTxt[4], const uint32_t s)
+void AES::XORText(uint32_t txt[4], const uint32_t s)
 {
     assert(s == 1 || s == 8 || s == 128);
 
@@ -1002,20 +1002,20 @@ void AES::XORPlainText(uint32_t plainTxt[4], const uint32_t s)
     {
     case 1:
 
-        state[0] ^= (plainTxt[0] << 31);
+        state[0] ^= (txt[0] << 31);
         break;
 
     case 8:
 
-        state[0] ^= (plainTxt[0] << 24);
+        state[0] ^= (txt[0] << 24);
         break;
 
     case 128:
 
-        state[0] ^= plainTxt[0];
-        state[1] ^= plainTxt[1];
-        state[2] ^= plainTxt[2];
-        state[3] ^= plainTxt[3];
+        state[0] ^= txt[0];
+        state[1] ^= txt[1];
+        state[2] ^= txt[2];
+        state[3] ^= txt[3];
         break;
     }
 }
@@ -1065,7 +1065,7 @@ void AES::EncryptCFB(const vector<uint8_t>& plainTxtIn, const uint32_t s,
         SubBytes();
         ShiftRows();
         AddRoundKey(nr);
-        XORPlainText(plainTxt, s);
+        XORText(plainTxt, s);
 
         WriteBits(s, ciphTxtOut, writeOffset);
         RotateIVLeft(s);
@@ -1087,5 +1087,45 @@ void AES::EncryptCFB(const vector<uint8_t>& plainTxtIn, const uint32_t s,
 void AES::DecryptCFB(const vector<uint8_t>& ciphTxtIn, const uint32_t s,
     vector<uint8_t>& plainTxtOut, const vector<uint32_t>& key)
 {
+    assert(plainTxtOut.size() == 0);
+    assert(s == 1 || s == 8 || s == 128);
 
+    plainTxtOut.resize(ciphTxtIn.size());
+    stream.SetData(ciphTxtIn, false);
+    ExpandKey(key);
+
+    uint32_t writeOffset = 0;
+
+    while (!stream.End())
+    {
+        ClearState();
+        uint32_t cipherTxt[4];
+        stream.Next(cipherTxt);
+
+        state[0] ^= iv[0];
+        state[1] ^= iv[1];
+        state[2] ^= iv[2];
+        state[3] ^= iv[3];
+
+        AddRoundKey(0);
+
+        for (uint32_t i = 1; i < nr; i++)
+        {
+            SubBytes();
+            ShiftRows();
+            MixColumns();
+            AddRoundKey(i);
+        }
+
+        SubBytes();
+        ShiftRows();
+        AddRoundKey(nr);
+        XORText(cipherTxt, s);
+
+        WriteBits(s, plainTxtOut, writeOffset);
+        RotateIVLeft(s);
+        UpdateInputBlock(s);
+
+        writeOffset += s;
+    }
 }

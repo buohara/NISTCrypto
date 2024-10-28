@@ -42,6 +42,7 @@ TestResult TestAESEncrypt256ECB()
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
         res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption."});
+        assert(false);
     }
     else
     {
@@ -92,7 +93,8 @@ TestResult TestAESDecrypt256ECB()
     if (plainTxtAct.size() != plainTxtExp.size() ||
         (memcmp(&plainTxtAct[0], &plainTxtExp[0], plainTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 CBC decryption." });
+        assert(false);
     }
     else
     {
@@ -142,7 +144,8 @@ TestResult TestAESEncrypt192ECB()
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES192 CBC encryption." });
+        assert(false);
     }
     else
     {
@@ -193,7 +196,8 @@ TestResult TestAESDecrypt192ECB()
     if (plainTxtAct.size() != plainTxtExp.size() ||
         (memcmp(&plainTxtAct[0], &plainTxtExp[0], plainTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES192 CBC decryption." });
+        assert(false);
     }
     else
     {
@@ -242,7 +246,8 @@ TestResult TestAESEncrypt128ECB()
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES128 ECB encryption." });
+        assert(false);
     }
     else
     {
@@ -292,7 +297,8 @@ TestResult TestAESDecrypt128ECB()
     if (plainTxtAct.size() != plainTxtExp.size() ||
         (memcmp(&plainTxtAct[0], &plainTxtExp[0], plainTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB decryption." });
+        assert(false);
     }
     else
     {
@@ -348,7 +354,8 @@ TestResult TestAESEncrypt128CBC()
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES128 CBC encryption." });
+        assert(false);
     }
     else
     {
@@ -404,7 +411,8 @@ TestResult TestAESDecrypt128CBC()
     if (plainTxtAct.size() != plainTxtExp.size() ||
         (memcmp(&plainTxtAct[0], &plainTxtExp[0], plainTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES128 CBC encryption." });
+        assert(false);
     }
     else
     {
@@ -460,7 +468,8 @@ TestResult TestAESEncrypt192CBC()
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES192 CBC encryption." });
+        assert(false);
     }
     else
     {
@@ -516,7 +525,8 @@ TestResult TestAESDecrypt192CBC()
     if (plainTxtAct.size() != plainTxtExp.size() ||
         (memcmp(&plainTxtAct[0], &plainTxtExp[0], plainTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES192 CBC decryption." });
+        assert(false);
     }
     else
     {
@@ -573,7 +583,8 @@ TestResult TestAESEncrypt256CBC()
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 CBC encryption." });
+        assert(false);
     }
     else
     {
@@ -630,7 +641,8 @@ TestResult TestAESDecrypt256CBC()
     if (plainTxtAct.size() != plainTxtExp.size() ||
         (memcmp(&plainTxtAct[0], &plainTxtExp[0], plainTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 CBC decryption." });
+        assert(false);
     }
     else
     {
@@ -681,7 +693,8 @@ TestResult TestAESEncrypt128CFB1()
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES128 CFB encryption." });
+        assert(false);
     }
     else
     {
@@ -732,7 +745,8 @@ TestResult TestAESEncrypt192CFB1()
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES192 CFB encryption." });
+        assert(false);
     }
     else
     {
@@ -772,7 +786,7 @@ TestResult TestAESEncrypt256CFB1()
 
     const vector<uint8_t> cipherTxtExp =
     {
-        0x94, 0x09
+        0x09, 0x94
     };
 
     vector<uint8_t> cipherTxtAct;
@@ -784,7 +798,8 @@ TestResult TestAESEncrypt256CFB1()
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 CFB encryption." });
+        assert(false);
     }
     else
     {
@@ -836,7 +851,8 @@ TestResult TestAESEncrypt128CFB8()
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES128 CFB encryption." });
+        assert(false);
     }
     else
     {
@@ -888,7 +904,8 @@ TestResult TestAESEncrypt192CFB8()
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES192 CFB encryption." });
+        assert(false);
     }
     else
     {
@@ -941,7 +958,8 @@ TestResult TestAESEncrypt256CFB8()
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 CFB encryption." });
+        assert(false);
     }
     else
     {
@@ -997,7 +1015,8 @@ TestResult TestAESEncrypt128CFB128()
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES128 CFB encryption." });
+        assert(false);
     }
     else
     {
@@ -1053,7 +1072,8 @@ TestResult TestAESEncrypt192CFB128()
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES192 CFB encryption." });
+        assert(false);
     }
     else
     {
@@ -1064,7 +1084,7 @@ TestResult TestAESEncrypt192CFB128()
 }
 
 /**
- * TestAESEncrypt256CFB8 - Encrypt plaintext with specified 256-bit key in
+ * TestAESEncrypt256CFB128 - Encrypt plaintext with specified 256-bit key in
  * cipher feedback mode (CFB) mode and compare against expected ciphertext.
  *
  * @return Pass if generated cipher text matches expected value.
@@ -1110,7 +1130,60 @@ TestResult TestAESEncrypt256CFB128()
     if (cipherTxtAct.size() != cipherTxtExp.size() ||
         (memcmp(&cipherTxtAct[0], &cipherTxtExp[0], cipherTxtAct.size()) != 0))
     {
-        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 ECB encryption." });
+        res.caseResults.push_back({ FAIL, "Unexpected cipher text generated in AES256 CFB encryption." });
+        assert(false);
+    }
+    else
+    {
+        res.caseResults.push_back({ PASS, "" });
+    }
+
+    return res;
+}
+
+/**
+ * TestAESDecrypt256CFB1 - Decrypt ciphertext with specified 256-bit key in
+ * cipher feedback mode (CFB) mode and compare against expected plaintext.
+ *
+ * @return Pass if generated plaintext matches expected value.
+ */
+
+TestResult TestAESDecrypt256CFB1()
+{
+    TestResult res;
+
+    const vector<uint8_t> cipherTxt =
+    {
+        0x09, 0x94
+    };
+
+    const vector<uint32_t> key =
+    {
+        0x603deb10, 0x15ca71be, 0x2b73aef0, 0x857d7781,
+        0x1f352c07, 0x3b6108d7, 0x2d9810a3, 0x0914dff4
+    };
+
+    const vector<uint32_t> iv =
+    {
+        0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f
+    };
+
+    const vector<uint8_t> plainTxtExp =
+    {
+        0xD6, 0x83
+    };
+
+    vector<uint8_t> plainTxtAct;
+
+    AES aes(AES256, CFB1);
+    aes.SetIV(iv);
+    aes.Decrypt(cipherTxt, plainTxtAct, key);
+
+    if (plainTxtExp.size() != plainTxtAct.size() ||
+        (memcmp(&plainTxtExp[0], &plainTxtAct[0], plainTxtAct.size()) != 0))
+    {
+        res.caseResults.push_back({ FAIL, "Unexpected plaintext generated in AES256 CFB encryption." });
+        assert(false);
     }
     else
     {

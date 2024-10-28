@@ -61,9 +61,9 @@ Random Number Generation (RNGs)
 Secure Hashing
 ==============
 
-- SHA-1
-- SHA-2
-- SHA-3
+- SHA1
+- SHA2
+- SHA3
 
 ------------------
 B - Validation
