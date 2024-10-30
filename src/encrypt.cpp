@@ -987,6 +987,45 @@ void AES::UpdateInputBlock(const uint32_t s)
 }
 
 /**
+ * AES::UpdateInputBlock - Helper for CFB mode. After processing each chunk of s bits of plaintext,
+ * input blocks are shifted left by s bits and the s MSB bits of the previous iteration's ciphertext
+ * are moved to the s LSB bits of input for the next round.
+ *
+ * Move the s MSB bits of the previous iteration's ciphertext to the s LSB bits of the next
+ * iteration's input block here.
+ *
+ * @param s     [in]    Number of ciphertext bits to add to the input block.
+ * @param txt   [in]    Text to shift into input block for CFB mode. Mostly used for CFB decryption.
+ */
+
+void AES::UpdateInputBlock(const uint32_t s, const uint32_t txt[4])
+{
+    assert(s == 1 || s == 8 || s == 128);
+
+    uint32_t update = 0;
+
+    switch (s)
+    {
+    case 1:
+
+        iv[3] &= 0xFFFFFFFE;
+        iv[3] |= txt[0];
+        break;
+
+    case 8:
+
+        iv[3] &= 0xFFFFFF00;
+        iv[3] |= txt[0];
+        break;
+
+    case 128:
+
+        memcpy(&iv[0], &txt[0], 16);
+        break;
+    }
+}
+
+/**
  * AES::XORPlainText - For CFB mode, XOR s bits of text into the AES
  * after each cipher iteration.
  *
@@ -1124,7 +1163,7 @@ void AES::DecryptCFB(const vector<uint8_t>& ciphTxtIn, const uint32_t s,
 
         WriteBits(s, plainTxtOut, writeOffset);
         RotateIVLeft(s);
-        UpdateInputBlock(s);
+        UpdateInputBlock(s, cipherTxt);
 
         writeOffset += s;
     }

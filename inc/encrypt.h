@@ -71,6 +71,7 @@ struct AES
     void ExpandKey(const vector<uint32_t>& key);
     void WriteBits(const uint32_t s, vector<uint8_t> &msgOut, const uint32_t offset);
     void UpdateInputBlock(const uint32_t s);
+    void UpdateInputBlock(const uint32_t s, const uint32_t txt[4]);
 
     void Encrypt(const vector<uint8_t> &plainTxtIn,
         vector<uint8_t> &ciphTxtOut, const vector<uint32_t> &key
