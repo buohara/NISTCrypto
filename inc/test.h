@@ -72,4 +72,14 @@ TestResult TestAESEncrypt256CFB1();
 TestResult TestAESEncrypt256CFB8();
 TestResult TestAESEncrypt256CFB128();
 
+TestResult TestAESDecrypt128CFB1();
+TestResult TestAESDecrypt128CFB8();
+TestResult TestAESDecrypt128CFB128();
+
+TestResult TestAESDecrypt192CFB1();
+TestResult TestAESDecrypt192CFB8();
+TestResult TestAESDecrypt192CFB128();
+
 TestResult TestAESDecrypt256CFB1();
+TestResult TestAESDecrypt256CFB8();
+TestResult TestAESDecrypt256CFB128();
