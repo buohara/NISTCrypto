@@ -23,7 +23,7 @@
     <ClInclude Include="inc\primes.h">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="inc\encrypt.h">
+    <ClInclude Include="inc\aes.h">
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="inc\utils.h">
@@ -46,7 +46,7 @@
     <ClCompile Include="src\primes.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\encrypt.cpp">
+    <ClCompile Include="src\aes.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\utils.cpp">

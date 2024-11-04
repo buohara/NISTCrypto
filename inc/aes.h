@@ -98,4 +98,12 @@ private:
     void DecryptCFB(const vector<uint8_t>& ciphTxtIn, const uint32_t s,
         vector<uint8_t>& plainTxtOut, const vector<uint32_t>& key
     );
+
+    void EncryptOFB(const vector<uint8_t>& plainTxtIn,
+        vector<uint8_t>& ciphTxtOut, const vector<uint32_t>& key
+    );
+
+    void DecryptOFB(const vector<uint8_t>& ciphTxtIn,
+        vector<uint8_t>& plainTxtOut, const vector<uint32_t>& key
+    );
 };

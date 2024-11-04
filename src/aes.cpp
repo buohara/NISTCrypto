@@ -1,4 +1,4 @@
-#include "encrypt.h"
+#include "aes.h"
 
 static const uint32_t rcs[11] =
 {
@@ -720,6 +720,12 @@ void AES::Encrypt(const vector<uint8_t>& plainTxtIn, vector<uint8_t>& ciphTxtOut
             EncryptCFB(plainTxtIn, 128, ciphTxtOut, key);
             break;
 
+
+        case OFB:
+
+            EncryptOFB(plainTxtIn, ciphTxtOut, key);
+            break;
+
         default:
 
             break;
@@ -727,7 +733,7 @@ void AES::Encrypt(const vector<uint8_t>& plainTxtIn, vector<uint8_t>& ciphTxtOut
 }
 
 /**
- * AES::Encrypt - AES decryption entry. Route to the appropriate decryption routine based on
+ * AES::Decrypt - AES decryption entry. Route to the appropriate decryption routine based on
  * AES mode.
  * 
  * @param ciphTxtIn     [in]        Ciphertext to be decrypted.
@@ -758,6 +764,11 @@ void AES::Decrypt(const vector<uint8_t>& ciphTxtIn, vector<uint8_t>& plainTxtOut
     case CFB128:
 
         DecryptCFB(ciphTxtIn, 128, plainTxtOut, key);
+        break;
+
+    case OFB:
+
+        DecryptOFB(ciphTxtIn, plainTxtOut, key);
         break;
 
     default:
@@ -1062,7 +1073,7 @@ void AES::XORText(uint32_t txt[4], const uint32_t s)
 /**
  * AES::EncryptCFB - Encrypt input plaintext in CFB mode.
  *
- * @param plainTxt      [in]        Plaintext to be encrypted.
+ * @param plainTxtIn    [in]        Plaintext to be encrypted.
  * @param s             [in]        Segment size for CFB mode.
  * @param ciphTxtOut    [in/out]    Output ciphertext.
  * @param key           [in]        AES key for encryption.
@@ -1120,7 +1131,7 @@ void AES::EncryptCFB(const vector<uint8_t>& plainTxtIn, const uint32_t s,
  * @param ciphTxtIn     [in]        Ciphertext to be decrypted.
  * @param s             [in]        Segment size for CFB mode.
  * @param plainTxtOut   [in/out]    Output plaintext.
- * @param key           [in]        AES key for encryption.
+ * @param key           [in]        AES key for decryption.
  */
 
 void AES::DecryptCFB(const vector<uint8_t>& ciphTxtIn, const uint32_t s,
@@ -1167,4 +1178,83 @@ void AES::DecryptCFB(const vector<uint8_t>& ciphTxtIn, const uint32_t s,
 
         writeOffset += s;
     }
+}
+
+/**
+ * AES::EncryptOFB - Encrypt input plaintext in OFB mode.
+ *
+ * @param plainTxt      [in]        Plaintext to be encrypted.
+ * @param ciphTxtOut    [in/out]    Output ciphertext.
+ * @param key           [in]        AES key for encryption.
+ */
+
+void AES::EncryptOFB(const vector<uint8_t>& plainTxtIn,
+    vector<uint8_t>& ciphTxtOut, const vector<uint32_t>& key)
+{
+    assert(ciphTxtOut.size() == 0);
+
+    ciphTxtOut.resize(plainTxtIn.size());
+    stream.SetData(plainTxtIn, false);
+    ExpandKey(key);
+
+    uint32_t writeOffset = 0;
+    uint32_t tmp[4];
+
+    while (!stream.End())
+    {
+        ClearState();
+        uint32_t plainTxt[4];
+        stream.Next(plainTxt);
+
+        state[0] = iv[0];
+        state[1] = iv[1];
+        state[2] = iv[2];
+        state[3] = iv[3];
+
+        AddRoundKey(0);
+
+        for (uint32_t i = 1; i < nr; i++)
+        {
+            SubBytes();
+            ShiftRows();
+            MixColumns();
+            AddRoundKey(i);
+        }
+
+        SubBytes();
+        ShiftRows();
+        AddRoundKey(nr);
+
+        iv[0] = state[0];
+        iv[1] = state[1];
+        iv[2] = state[2];
+        iv[3] = state[3];
+
+        state[0] ^= REVERSE_ENDIAN32(plainTxt[0]);
+        state[1] ^= REVERSE_ENDIAN32(plainTxt[1]);
+        state[2] ^= REVERSE_ENDIAN32(plainTxt[2]);
+        state[3] ^= REVERSE_ENDIAN32(plainTxt[3]);
+
+        tmp[0] = REVERSE_ENDIAN32(state[0]);
+        tmp[1] = REVERSE_ENDIAN32(state[1]);
+        tmp[2] = REVERSE_ENDIAN32(state[2]);
+        tmp[3] = REVERSE_ENDIAN32(state[3]);
+
+        memcpy(&ciphTxtOut[writeOffset], &tmp[0], 16);
+        writeOffset += 16;
+    }
+}
+
+/**
+ * AES::DecryptOFB - Decrypt input ciphertext in OFB mode.
+ *
+ * @param ciphTxtIn      [in]        Ciphertext to be decrypted.
+ * @param plainTxtOut    [in/out]    Output plaintext.
+ * @param key            [in]        AES key for decryption.
+ */
+
+void AES::DecryptOFB(const vector<uint8_t>& ciphTxtIn,
+    vector<uint8_t>& plainTxtOut, const vector<uint32_t>& key)
+{
+
 }

@@ -91,7 +91,7 @@ TestGroupList testGroups =
     {
         { 
             "Block Cipher",
-            "Block cipher unit tests for AES."
+            "Block cipher unit tests for AES and TDES."
         },
         {
             /*{ "TestAESEncrypt256ECB",       TestAESEncrypt256ECB },
@@ -114,7 +114,7 @@ TestGroupList testGroups =
             { "TestAESEncrypt192CFB128",    TestAESEncrypt192CFB128 },
             { "TestAESEncrypt256CFB1",      TestAESEncrypt256CFB1 },
             { "TestAESEncrypt256CFB8",      TestAESEncrypt256CFB8 },
-            { "TestAESEncrypt256CFB128",    TestAESEncrypt256CFB128 },*/
+            { "TestAESEncrypt256CFB128",    TestAESEncrypt256CFB128 },
             { "TestAESDecrypt128CFB1",      TestAESDecrypt128CFB1 },
             { "TestAESDecrypt128CFB8",      TestAESDecrypt128CFB8 },
             { "TestAESDecrypt128CFB128",    TestAESDecrypt128CFB128 },
@@ -123,7 +123,8 @@ TestGroupList testGroups =
             { "TestAESDecrypt192CFB128",    TestAESDecrypt192CFB128 },
             { "TestAESDecrypt256CFB1",      TestAESDecrypt256CFB1 },
             { "TestAESDecrypt256CFB8",      TestAESDecrypt256CFB8 },
-            { "TestAESDecrypt256CFB128",    TestAESDecrypt256CFB128 }
+            { "TestAESDecrypt256CFB128",    TestAESDecrypt256CFB128 },*/
+            { "TestAESEncrypt256OFB",       TestAESEncrypt256OFB }
         }
     }
 };
