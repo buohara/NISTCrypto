@@ -1256,5 +1256,56 @@ void AES::EncryptOFB(const vector<uint8_t>& plainTxtIn,
 void AES::DecryptOFB(const vector<uint8_t>& ciphTxtIn,
     vector<uint8_t>& plainTxtOut, const vector<uint32_t>& key)
 {
+    assert(plainTxtOut.size() == 0);
 
+    plainTxtOut.resize(ciphTxtIn.size());
+    stream.SetData(ciphTxtIn, false);
+    ExpandKey(key);
+
+    uint32_t writeOffset = 0;
+    uint32_t tmp[4];
+
+    while (!stream.End())
+    {
+        ClearState();
+        uint32_t ciphTxt[4];
+        stream.Next(ciphTxt);
+
+        state[0] = iv[0];
+        state[1] = iv[1];
+        state[2] = iv[2];
+        state[3] = iv[3];
+
+        AddRoundKey(0);
+
+        for (uint32_t i = 1; i < nr; i++)
+        {
+            SubBytes();
+            ShiftRows();
+            MixColumns();
+            AddRoundKey(i);
+        }
+
+        SubBytes();
+        ShiftRows();
+        AddRoundKey(nr);
+
+        iv[0] = state[0];
+        iv[1] = state[1];
+        iv[2] = state[2];
+        iv[3] = state[3];
+
+        state[0] ^= REVERSE_ENDIAN32(ciphTxt[0]);
+        state[1] ^= REVERSE_ENDIAN32(ciphTxt[1]);
+        state[2] ^= REVERSE_ENDIAN32(ciphTxt[2]);
+        state[3] ^= REVERSE_ENDIAN32(ciphTxt[3]);
+
+        tmp[0] = REVERSE_ENDIAN32(state[0]);
+        tmp[1] = REVERSE_ENDIAN32(state[1]);
+        tmp[2] = REVERSE_ENDIAN32(state[2]);
+        tmp[3] = REVERSE_ENDIAN32(state[3]);
+
+        memcpy(&plainTxtOut[writeOffset], &tmp[0], 16);
+        writeOffset += 16;
+    }
 }
