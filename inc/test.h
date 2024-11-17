@@ -25,6 +25,7 @@ TestResult TestCmpAddBigIntCorrect();
 TestResult TestCmpSubBigIntCorrect();
 TestResult TestCmpMulBigIntCorrect();
 TestResult TestCmpDivBigIntCorrect();
+TestResult TestCmpModBigIntCorrect();
 TestResult TestSqrtBigIntCorrect();
 
 TestResult TestDiff();

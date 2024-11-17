@@ -1,5 +1,7 @@
 #include "bigint.h"
 
+#define BIGINT_DIV_BRUTE 1
+
 static void DivideU8(const BigInt& dividend, const uint8_t divisor, BigInt& quotient, uint8_t& rem);
 static void AddBinaryStrings(const string& u1, const string& u2, vector<uint8_t> &sum);
 static void SubtractBinaryStrings(const string& u1, const string& u2, vector<uint8_t>& sum);
@@ -231,6 +233,13 @@ BigInt::BigInt(vector<uint8_t>& dataIn)
 
 BigInt::BigInt(uint64_t val)
 {
+    if (val == 0)
+    {
+        nBits = 1;
+        data.push_back(0);
+        return;
+    }
+
     nBits           = (uint64_t)log2(val) + 1;
     uint64_t bytes  = BYTES(nBits);
 
@@ -343,6 +352,25 @@ bool BigInt::operator==(const BigInt& rhs) const
 }
 
 /**
+ * BigInt::operator!= - Check inequality with another big int.
+ *
+ * @param rhs       [in] Integer to check equality against.
+ *
+ * @return          True if integers are equal, false otherwise.
+ */
+
+bool BigInt::operator!=(const BigInt& rhs) const
+{
+    if (nBits != rhs.nBits)
+        return true;
+
+    if (memcmp(&data[0], &rhs.data[0], data.size()) != 0)
+        return true;
+
+    return false;
+}
+
+/**
  * BigInt::operator== - Check if another 64-bit integer equals this one.
  *
  * @param rhs       [in] Integer to check equality against.
@@ -408,8 +436,69 @@ bool BigInt::operator<(const BigInt& rhs) const
         return false;
 
     for (uint64_t i = data.size(); i-- > 0;)
-        if (data[i] < rhs.data[i])
-            return true;
+        if (data[i] != rhs.data[i])
+            if (data[i] < rhs.data[i])
+                return true;
+            else
+                return false;
+
+    return false;
+}
+
+/**
+ * BigInt::operator>= - BigInt geq comparison operator.
+ *
+ * @param rhs       [in] BigInt to compare against.
+ *
+ * @return          True if this is geq than RHS, false otherwise.
+ */
+
+bool BigInt::operator>=(const BigInt& rhs) const
+{
+    if (nBits > rhs.nBits)
+        return true;
+
+    if (nBits < rhs.nBits)
+        return false;
+
+    if (memcmp(&data[0], &rhs.data[0], data.size()) == 0)
+        return true;
+
+    for (uint64_t i = data.size(); i-- > 0;)
+        if (data[i] != rhs.data[i])
+            if (data[i] > rhs.data[i])
+                return true;
+            else
+                return false;
+
+    return false;
+}
+
+/**
+ * BigInt::operator<= - BigInt leq comparison operator.
+ *
+ * @param rhs       [in] BigInt to compare against.
+ *
+ * @return          True if this is leq than RHS, false otherwise.
+ */
+
+bool BigInt::operator<=(const BigInt& rhs) const
+{
+    if (nBits < rhs.nBits)
+        return true;
+
+    if (nBits > rhs.nBits)
+        return false;
+
+    if (memcmp(&data[0], &rhs.data[0], data.size()) == 0)
+        return true;
+
+    for (uint64_t i = data.size(); i-- > 0;)
+        if (data[i] != rhs.data[i])
+            if (data[i] < rhs.data[i])
+                return true;
+            else
+                return false;
 
     return false;
 }
@@ -789,6 +878,43 @@ BigInt& BigInt::operator/=(const BigInt& rhs)
         return *this;
     }
 
+#ifdef BIGINT_DIV_BRUTE
+
+    BigInt rem = *this;
+    BigInt res(0);
+
+    while (1)
+    {
+        BigInt cur = rhs;
+        BigInt quot(1);
+
+        while (cur < rem)
+        {
+            cur     <<= 8;
+            quot    <<= 8;
+        }
+
+        cur     >>= 8;
+        quot    >>= 8;
+
+        BigInt i = 2;
+
+        while ((i * cur) <= rem)
+            i++;
+
+        i--;
+        res += (i * quot);
+        rem -= (i * cur);
+
+        if (rem < rhs)
+            break;
+    }
+
+    *this = res;
+    return *this;
+
+#else
+
     vector<uint8_t> vals;
 
     BigInt rem      = *this;
@@ -796,30 +922,19 @@ BigInt& BigInt::operator/=(const BigInt& rhs)
 
     while (1)
     {
-        uint16_t leadDiv    = rem.data[rem.data.size() - 1];
-        uint64_t i          = 1;
-
-        while (leadDiv <= leadRHS)
-        {
-            leadDiv = leadDiv * 256 + rem.data[rem.data.size() - i - 1];
-            i++;
-        }
-
-        uint8_t curQuot = leadDiv / leadRHS;
-        uint32_t shift  = 8 * (rem.data.size() - i - rhs.data.size() + 1);
+        uint32_t remSize    = rem.data.size();
+        uint32_t leadDiv    = rem.data[remSize - 1];
         
-        BigInt cur      = BigInt(curQuot);
-        cur             <<= shift;
+        if (leadDiv < leadRHS)
+            leadDiv = 256 * leadDiv + rem.data[remSize - 2];
 
-        while (rhs * cur > rem)
-        {
-            curQuot--;
-            cur = BigInt(curQuot);
-            cur <<= shift;
-        }
+        uint8_t curQuot     = leadDiv / leadRHS;
+        BigInt cur          = BigInt(curQuot);
+
+        cur <<= (rem.data[remSize - 1] < leadRHS) ? (8 * (remSize - 2)) : (8 * (remSize - 1));
 
         vals.insert(vals.begin(), curQuot);
-        rem = rem - rhs * cur;
+        rem                 = rem - rhs * cur;
 
         if (rhs > rem)
             break;
@@ -827,6 +942,98 @@ BigInt& BigInt::operator/=(const BigInt& rhs)
 
     *this = BigInt(vals);
     return *this;
+
+#endif
+}
+
+/**
+ * BigInt::operator%= - BigInt compound modulus operator.
+ *
+ * @param rhs   [in] Divisor.
+ *
+ * @return      Modulus of this int divided by RHS.
+ */
+
+BigInt& BigInt::operator%=(const BigInt& rhs)
+{
+    if (this == &rhs || *this == rhs)
+    {
+        data.resize(1);
+        data[0] = 0;
+        nBits   = 1;
+
+        return *this;
+    }
+
+#ifdef BIGINT_DIV_BRUTE
+
+    BigInt rem = *this;
+    BigInt res(0);
+
+    while (1)
+    {
+        BigInt cur = rhs;
+        BigInt quot(1);
+
+        while (cur < rem)
+        {
+            cur     <<= 8;
+            quot    <<= 8;
+        }
+
+        cur  >>= 8;
+        quot >>= 8;
+
+        BigInt i = 2;
+
+        while ((i * cur) <= rem)
+            i++;
+
+        i--;
+        res += (i * quot);
+        rem -= (i * cur);
+
+        if (rem < rhs)
+            break;
+    }
+
+    *this = rem;
+    return *this;
+
+#else
+
+    vector<uint8_t> vals;
+
+    BigInt rem      = *this;
+    uint8_t leadRHS = rhs.data[rhs.data.size() - 1];
+
+    while (1)
+    {
+        uint32_t leadDiv    = rem.data[rem.data.size() - 1];
+        uint64_t i          = 1;
+
+        uint8_t curQuot     = leadDiv / leadRHS;
+        BigInt cur          = BigInt(curQuot);
+
+        vals.insert(vals.begin(), curQuot);
+
+        uint32_t remSzPrev  = rem.data.size();
+        rem                 = rem - rhs * cur;
+
+        if (rhs > rem)
+            break;
+
+        while (remSzPrev - rem.data.size() > 1)
+        {
+            vals.insert(vals.begin(), 0);
+            remSzPrev--;
+        }
+    }
+
+    *this = BigInt(rem);
+    return *this;
+
+#endif
 }
 
 /**

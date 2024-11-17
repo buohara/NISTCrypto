@@ -23,6 +23,8 @@ struct BigInt
     bool operator==(const uint64_t rhs);
     bool operator>(const BigInt& rhs) const;
     bool operator<(const BigInt& rhs) const;
+    bool operator>=(const BigInt& rhs) const;
+    bool operator<=(const BigInt& rhs) const;
     BigInt& operator=(const BigInt& rhs);
     BigInt& operator<<=(uint64_t shift);
     BigInt& operator>>=(uint64_t shift);
@@ -36,10 +38,11 @@ struct BigInt
     BigInt operator*(const uint8_t rhs) const;
     BigInt& operator/=(const BigInt& rhs);
     BigInt& operator/=(const uint8_t rhs);
+    BigInt& operator%=(const BigInt& rhs);
     BigInt operator/(const BigInt& rhs) const;
     BigInt& operator++(int rhs);
     BigInt& operator--(int rhs);
-
+    bool operator!=(const BigInt& rhs) const;
     BigInt Sqrt() const;
 };
 

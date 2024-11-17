@@ -142,8 +142,8 @@
     <ClInclude Include="inc\bigint.h" />
     <ClInclude Include="inc\compress.h" />
     <ClInclude Include="inc\aes.h" />
-    <ClInclude Include="inc\hash.h" />
-    <ClInclude Include="inc\msgstreamer.h" />
+    <ClInclude Include="inc\ecdsa.h" />
+    <ClInclude Include="inc\sha.h" />
     <ClInclude Include="inc\primes.h" />
     <ClInclude Include="inc\utils.h" />
   </ItemGroup>
@@ -151,8 +151,8 @@
     <ClCompile Include="src\bigint.cpp" />
     <ClCompile Include="src\diff.cpp" />
     <ClCompile Include="src\aes.cpp" />
-    <ClCompile Include="src\hash.cpp" />
-    <ClCompile Include="src\msgstreamer.cpp" />
+    <ClCompile Include="src\ecdsa.cpp" />
+    <ClCompile Include="src\sha.cpp" />
     <ClCompile Include="src\primes.cpp" />
     <ClCompile Include="src\utils.cpp" />
   </ItemGroup>

@@ -1,5 +1,5 @@
 #include "test.h"
-#include "hash.h"
+#include "sha.h"
 
 const uint64_t numCases = 100;
 

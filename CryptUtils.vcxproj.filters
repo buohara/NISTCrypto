@@ -17,7 +17,7 @@
     <ClInclude Include="inc\compress.h">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="inc\hash.h">
+    <ClInclude Include="inc\sha.h">
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="inc\primes.h">
@@ -29,7 +29,7 @@
     <ClInclude Include="inc\utils.h">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="inc\msgstreamer.h">
+    <ClInclude Include="inc\ecdsa.h">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>
@@ -40,7 +40,7 @@
     <ClCompile Include="src\diff.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\hash.cpp">
+    <ClCompile Include="src\sha.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\primes.cpp">
@@ -52,7 +52,7 @@
     <ClCompile Include="src\utils.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\msgstreamer.cpp">
+    <ClCompile Include="src\ecdsa.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

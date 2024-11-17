@@ -1,8 +1,6 @@
 #include "commoninc.h"
 #include "test.h"
 
-#include "hash.h"
-
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
 
@@ -43,6 +41,7 @@ TestGroupList testGroups =
             { "TestCmpSubBigIntCorrect",    TestCmpSubBigIntCorrect },
             { "TestCmpMulBigIntCorrect",    TestCmpMulBigIntCorrect },
             { "TestCmpDivBigIntCorrect",    TestCmpDivBigIntCorrect },
+            { "TestCmpModBigIntCorrect",    TestCmpModBigIntCorrect },
             { "TestSqrtBigIntCorrect",      TestSqrtBigIntCorrect }
         }
     },

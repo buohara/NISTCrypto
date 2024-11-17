@@ -243,6 +243,7 @@ TestResult TestAssignBigInt()
         if (!(a == b))
         {
             char msg[256];
+            assert(false);
 
             sprintf(
                 msg,
@@ -292,6 +293,7 @@ TestResult TestCmpLShiftBigIntCorrect()
             if (!(randInt == str2Int))
             {
                 char msg[256];
+                assert(false);
 
                 sprintf(
                     msg,
@@ -346,6 +348,7 @@ TestResult TestCmpRShiftBigIntCorrect()
             if (!(randInt == str2Int))
             {
                 char msg[256];
+                assert(false);
 
                 sprintf(
                     msg,
@@ -401,6 +404,7 @@ TestResult TestCmpAddBigIntCorrect()
             if (!(a == aStrToInt))
             {
                 char msg[256];
+                assert(false);
 
                 sprintf(
                     msg,
@@ -456,6 +460,7 @@ TestResult TestCmpSubBigIntCorrect()
             if (!(a == aStrToInt))
             {
                 char msg[256];
+                assert(false);
 
                 sprintf(
                     msg,
@@ -509,6 +514,7 @@ TestResult TestCmpMulBigIntCorrect()
             if (!(a == strToInt))
             {
                 char msg[256];
+                assert(false);
 
                 sprintf(
                     msg,
@@ -531,8 +537,9 @@ TestResult TestCmpMulBigIntCorrect()
 }
 
 /**
- * TestCmpDivBigIntCorrect - Test big integer division. Simulate large
- * integer division using large double floats for validation.
+ * TestCmpDivBigIntCorrect - Test big integer division. Generate
+ * two random big ints, multiply, then divide again. Check result matches
+ * beginning values.
  *
  * @return  Pass if divisions match expected patterns, fail otherwise.
  */
@@ -558,12 +565,65 @@ TestResult TestCmpDivBigIntCorrect()
             if (!(a == tmp))
             {
                 char msg[256];
+                assert(false);
 
                 sprintf(
                     msg,
                     "BigInt compound divide failed. Expected = %s, actual = %s",
                     a.GetHexString().c_str(),
                     tmp.GetHexString().c_str()
+                );
+
+                res.caseResults.push_back({ FAIL, string(msg) });
+            }
+            else
+            {
+                res.caseResults.push_back({ PASS, "" });
+            }
+        }
+    }
+
+
+    return res;
+}
+
+/**
+ * TestCmpModBigIntCorrect - Test big integer modulus. Generate values
+ * a and b, compute q = a / b and r = a % b, and check a = b * q + r. 
+ *
+ * @return  Pass if divisions match expected patterns, fail otherwise.
+ */
+
+TestResult TestCmpModBigIntCorrect()
+{
+    TestResult res;
+
+    for (uint64_t i = 1; i < nSizes; i++)
+    {
+        for (uint64_t j = 0; j < numCasesPerSize; j++)
+        {
+            BigInt a;
+            BigIntRand(testIntBitSizes[i], a);
+
+            BigInt b;
+            BigIntRand(testIntBitSizes[i - 1], b);
+
+            BigInt q = a;
+            BigInt r = a;
+            q /= b;
+            r %= b;
+
+            if (a != ((q * b) + r))
+            {
+                char msg[256];
+                assert(false);
+
+                sprintf(
+                    msg,
+                    "BigInt compound mod failed with a = %s, b = %s, r = %s",
+                    a.GetHexString().c_str(),
+                    b.GetHexString().c_str(),
+                    r.GetHexString().c_str()
                 );
 
                 res.caseResults.push_back({ FAIL, string(msg) });
@@ -605,6 +665,7 @@ TestResult TestSqrtBigIntCorrect()
             if (!(a == root))
             {
                 char msg[256];
+                assert(false);
 
                 sprintf(
                     msg,

@@ -1,9 +1,11 @@
 #pragma once
 
 #include "commoninc.h"
-#include "msgstreamer.h"
 
 using namespace std;
+
+#define ROTR32(x, n) (((x) >> (n)) || ((x) << ((32 - n))))
+#define ROTR64(x, n) (((x) >> (n)) || ((x) << ((64 - n))))
 
 #define STATE_W             5
 #define STATE_H             5
@@ -12,9 +14,24 @@ using namespace std;
 #define NUM_SHA3_ROUNDS     24
 
 #define SHA3_WORD_SZ        64
-
 #define LANE(x, y) (5 * (y) + (x))
 #define STATE_IDX(x, y, z) (320 * (y) + 64 * (x) + (z))
+
+struct SHAStreamer
+{
+    uint64_t r;
+    uint64_t offset;
+
+    vector<uint8_t> data;
+
+    SHAStreamer() : r(0), offset(0) {}
+    SHAStreamer(uint64_t rIn) : r(rIn), offset(0) {};
+
+    void SetData(vector<uint8_t>& dataIn, bool bLittleEndian = true);
+    void Reset();
+    void Next(vector<uint64_t>& blockOut);
+    bool End();
+};
 
 enum SHASize
 {
@@ -28,6 +45,26 @@ enum PrintMode
 {
     XY,
     LINEAR
+};
+
+struct SHA2
+{
+    uint32_t ch32(uint32_t x, uint32_t y, uint32_t z);
+    uint32_t maj32(uint32_t x, uint32_t y, uint32_t z);
+    uint32_t Sig032(uint32_t x);
+    uint32_t Sig132(uint32_t x);
+    uint32_t sig032(uint32_t x);
+    uint32_t sig132(uint32_t x);
+
+    uint64_t ch64(uint64_t x, uint64_t y, uint64_t z);
+    uint64_t maj64(uint64_t x, uint64_t y, uint64_t z);
+    uint64_t Sig064(uint64_t x);
+    uint64_t Sig164(uint64_t x);
+    uint64_t sig064(uint64_t x);
+    uint64_t sig164(uint64_t x);
+
+    void Hash256(vector<uint8_t>& msg, vector<uint8_t>& md);
+    void Hash512(vector<uint8_t>& msg, vector<uint8_t>& md);
 };
 
 struct SHA3Params
