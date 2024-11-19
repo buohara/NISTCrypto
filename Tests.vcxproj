@@ -154,7 +154,7 @@
     <ClCompile Include="test\testbigint.cpp" />
     <ClCompile Include="test\testdiff.cpp" />
     <ClCompile Include="test\testmain.cpp" />
-    <ClCompile Include="test\testsha3.cpp" />
+    <ClCompile Include="test\testsha.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="CryptUtils.vcxproj">

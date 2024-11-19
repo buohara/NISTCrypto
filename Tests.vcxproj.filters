@@ -25,7 +25,7 @@
     <ClCompile Include="test\testmain.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="test\testsha3.cpp">
+    <ClCompile Include="test\testsha.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="test\testaes.cpp">

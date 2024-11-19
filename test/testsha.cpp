@@ -3,21 +3,21 @@
 
 const uint64_t numCases = 100;
 
-enum SHA3_TEST_MODE
+enum SHA_TEST_MODE
 {
     MSG,
     MONTE,
     NUM_MODES
 };
 
-struct SHA3TestVecs
+struct SHATestVecs
 {
-    SHA3_TEST_MODE mode;
+    SHA_TEST_MODE mode;
 
     vector<vector<uint8_t>> msgs;
     vector<vector<uint8_t>> mds;
 
-    SHA3TestVecs() : mode(MSG) {}
+    SHATestVecs() : mode(MSG) {}
 };
 
 /**
@@ -30,7 +30,7 @@ struct SHA3TestVecs
  * @return  Pass if hash matches, fail otherwise.
  */
 
-static void LoadTestVecsFromFile(const string file, SHA3TestVecs& vecs)
+static void LoadTestVecsFromFile(const string file, SHATestVecs& vecs)
 {
     assert(vecs.msgs.size() == 0 && vecs.mds.size() == 0);
 
@@ -112,6 +112,132 @@ static void LoadTestVecsFromFile(const string file, SHA3TestVecs& vecs)
 }
 
 /**
+ * RunSHAMessageTest - Load test vectors and MDs from a test file. Hash the
+ * test vectors and compare against expected.
+ *
+ * @param testVecFile   [in] Test vec file.
+ *
+ * @return List of test results.
+ */
+
+static TestResult RunSHAMessageTest(string testVecFile, SHASize sz)
+{
+    assert(sz == SHA256 || sz == SHA512);
+
+    TestResult res;
+    SHATestVecs vecs;
+
+    LoadTestVecsFromFile(testVecFile, vecs);
+
+    for (uint64_t i = 0; i < vecs.msgs.size(); i++)
+    {
+        SHA2 sha;
+        vector<uint8_t> mdOut;
+
+        if (sz == SHA256)
+            sha.Hash256(vecs.msgs[i], mdOut);
+        else
+            sha.Hash512(vecs.msgs[i], mdOut);
+
+        if (mdOut.size() != vecs.mds[i].size() ||
+            (memcmp(&mdOut[0], &vecs.mds[i][0], mdOut.size()) != 0))
+        {
+            char msg[256];
+
+            string mdOutStr;
+            HexArrayToString(mdOut, mdOutStr, false);
+
+            string hashExpStr;
+            HexArrayToString(vecs.mds[i], hashExpStr, false);
+
+            sprintf(
+                msg,
+                "SHA3 message test failed. Input file = %s, test ID = %llu",
+                testVecFile.c_str(),
+                i
+            );
+
+            res.caseResults.push_back({ FAIL, string(msg) });
+        }
+        else
+        {
+            res.caseResults.push_back({ PASS, "" });
+        }
+    }
+
+    return res;
+}
+
+/**
+ * RunSHA3Monte - Load test vectors and MDs from a test file. Hash the
+ * test vectors and compare against expected.
+ *
+ * @param testVecFile   [in] Test vec file.
+ *
+ * @return List of test results.
+ */
+
+static TestResult RunSHAMonte(string testVecFile, SHASize sz)
+{
+    assert(sz == SHA256 || sz == SHA512);
+
+    TestResult res;
+    SHATestVecs vecs;
+
+    LoadTestVecsFromFile(testVecFile, vecs);
+
+    SHA2 sha;
+    vector<uint8_t> msg = vecs.msgs[0];
+    vector<uint8_t> mdOut;
+
+    for (uint64_t i = 0; i < vecs.mds.size(); i++)
+    {
+        mdOut.resize(0);
+
+        for (uint64_t j = 0; j < 1000; j++)
+        {
+            if (sz == SHA256)
+                sha.Hash256(msg, mdOut);
+            else
+                sha.Hash512(msg, mdOut);
+
+            msg = mdOut;
+            mdOut.resize(0);
+        }
+
+        mdOut = msg;
+
+        if (mdOut.size() != vecs.mds[i].size() ||
+            (memcmp(&mdOut[0], &vecs.mds[i][0], mdOut.size()) != 0))
+        {
+            assert(false);
+            char msg[256];
+
+            string mdOutStr;
+            HexArrayToString(mdOut, mdOutStr);
+
+            string hashExpStr;
+            HexArrayToString(vecs.mds[i], hashExpStr);
+
+            sprintf(
+                msg,
+                "SHA3 message test failed. Input file = %s, test ID = %llu",
+                testVecFile.c_str(),
+                i
+            );
+
+            res.caseResults.push_back({ FAIL, string(msg) });
+        }
+        else
+        {
+            res.caseResults.push_back({ PASS, "" });
+        }
+    }
+
+    return res;
+}
+
+/**
  * RunSHA3MessageTest - Load test vectors and MDs from a test file. Hash the
  * test vectors and compare against expected.
  * 
@@ -123,7 +249,7 @@ static void LoadTestVecsFromFile(const string file, SHA3TestVecs& vecs)
 static TestResult RunSHA3MessageTest(string testVecFile, SHASize sz)
 {
     TestResult res;
-    SHA3TestVecs vecs;
+    SHATestVecs vecs;
 
     LoadTestVecsFromFile(testVecFile, vecs);
 
@@ -174,7 +300,7 @@ static TestResult RunSHA3MessageTest(string testVecFile, SHASize sz)
 static TestResult RunSHA3Monte(string testVecFile, SHASize sz)
 {
     TestResult res;
-    SHA3TestVecs vecs;
+    SHATestVecs vecs;
 
     LoadTestVecsFromFile(testVecFile, vecs);
 
@@ -225,6 +351,44 @@ static TestResult RunSHA3Monte(string testVecFile, SHASize sz)
 }
 
 /**
+ * TestSHA256Short - Compute a SHA256 hash for a short input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA256Short()
+{
+    SHATestVecs vecs;
+
+    TestResult res = RunSHAMessageTest(
+        "test/shabytetestvectors/SHA256ShortMsg.rsp",
+        SHA256
+    );
+
+    return res;
+}
+
+/**
+ * TestSHA512Short - Compute a SHA512 hash for a short input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA512Short()
+{
+    SHATestVecs vecs;
+
+    TestResult res = RunSHAMessageTest(
+        "test/shabytetestvectors/SHA512ShortMsg.rsp",
+        SHA512
+    );
+
+    return res;
+}
+
+/**
  * TestSHA3224Short - Compute a SHA3 hash for a short input and compare
  * against known value.
  *
@@ -233,7 +397,7 @@ static TestResult RunSHA3Monte(string testVecFile, SHASize sz)
 
 TestResult TestSHA3224Short()
 {
-    SHA3TestVecs vecs;
+    SHATestVecs vecs;
 
     TestResult res = RunSHA3MessageTest(
         "test/sha-3bytetestvectors/SHA3_224ShortMsg.rsp",
@@ -252,7 +416,7 @@ TestResult TestSHA3224Short()
 
 TestResult TestSHA3224Long()
 {
-    SHA3TestVecs vecs;
+    SHATestVecs vecs;
 
     TestResult res = RunSHA3MessageTest(
         "test/sha-3bytetestvectors/SHA3_224LongMsg.rsp",
@@ -271,7 +435,7 @@ TestResult TestSHA3224Long()
 
 TestResult TestSHA3224Monte()
 {
-    SHA3TestVecs vecs;
+    SHATestVecs vecs;
 
     TestResult res = RunSHA3Monte(
         "test/sha-3bytetestvectors/SHA3_224Monte.rsp",
@@ -290,7 +454,7 @@ TestResult TestSHA3224Monte()
 
 TestResult TestSHA3256Short()
 {
-    SHA3TestVecs vecs;
+    SHATestVecs vecs;
 
     TestResult res = RunSHA3MessageTest(
         "test/sha-3bytetestvectors/SHA3_256ShortMsg.rsp",
@@ -309,7 +473,7 @@ TestResult TestSHA3256Short()
 
 TestResult TestSHA3256Long()
 {
-    SHA3TestVecs vecs;
+    SHATestVecs vecs;
 
     TestResult res = RunSHA3MessageTest(
         "test/sha-3bytetestvectors/SHA3_256LongMsg.rsp",
@@ -328,7 +492,7 @@ TestResult TestSHA3256Long()
 
 TestResult TestSHA3256Monte()
 {
-    SHA3TestVecs vecs;
+    SHATestVecs vecs;
 
     TestResult res = RunSHA3Monte(
         "test/sha-3bytetestvectors/SHA3_256Monte.rsp",
@@ -347,7 +511,7 @@ TestResult TestSHA3256Monte()
 
 TestResult TestSHA3384Short()
 {
-    SHA3TestVecs vecs;
+    SHATestVecs vecs;
 
     TestResult res = RunSHA3MessageTest(
         "test/sha-3bytetestvectors/SHA3_384ShortMsg.rsp",
@@ -366,7 +530,7 @@ TestResult TestSHA3384Short()
 
 TestResult TestSHA3384Long()
 {
-    SHA3TestVecs vecs;
+    SHATestVecs vecs;
 
     TestResult res = RunSHA3MessageTest(
         "test/sha-3bytetestvectors/SHA3_384LongMsg.rsp",
@@ -385,7 +549,7 @@ TestResult TestSHA3384Long()
 
 TestResult TestSHA3384Monte()
 {
-    SHA3TestVecs vecs;
+    SHATestVecs vecs;
 
     TestResult res = RunSHA3Monte(
         "test/sha-3bytetestvectors/SHA3_384Monte.rsp",
@@ -404,7 +568,7 @@ TestResult TestSHA3384Monte()
 
 TestResult TestSHA3512Short()
 {
-    SHA3TestVecs vecs;
+    SHATestVecs vecs;
 
     TestResult res = RunSHA3MessageTest(
         "test/sha-3bytetestvectors/SHA3_512ShortMsg.rsp",
@@ -422,7 +586,7 @@ TestResult TestSHA3512Short()
 
 TestResult TestSHA3512Long()
 {
-    SHA3TestVecs vecs;
+    SHATestVecs vecs;
 
     TestResult res = RunSHA3MessageTest(
         "test/sha-3bytetestvectors/SHA3_512LongMsg.rsp",
@@ -440,7 +604,7 @@ TestResult TestSHA3512Long()
 
 TestResult TestSHA3512Monte()
 {
-    SHA3TestVecs vecs;
+    SHATestVecs vecs;
 
     TestResult res = RunSHA3Monte(
         "test/sha-3bytetestvectors/SHA3_512Monte.rsp",

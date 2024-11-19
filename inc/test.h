@@ -31,6 +31,9 @@ TestResult TestSqrtBigIntCorrect();
 TestResult TestDiff();
 TestResult TestPatch();
 
+TestResult TestSHA256Short();
+TestResult TestSHA512Short();
+
 TestResult TestSHA3224Short();
 TestResult TestSHA3224Long();
 TestResult TestSHA3224Monte();

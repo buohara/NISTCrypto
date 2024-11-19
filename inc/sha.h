@@ -1,11 +1,12 @@
 #pragma once
 
 #include "commoninc.h"
+#include "utils.h"
 
 using namespace std;
 
-#define ROTR32(x, n) (((x) >> (n)) || ((x) << ((32 - n))))
-#define ROTR64(x, n) (((x) >> (n)) || ((x) << ((64 - n))))
+#define ROTR32(x, n) (((x) >> (n)) | ((x) << ((32 - n))))
+#define ROTR64(x, n) (((x) >> (n)) | ((x) << ((64 - n))))
 
 #define STATE_W             5
 #define STATE_H             5
