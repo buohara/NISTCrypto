@@ -3,12 +3,53 @@
 #include "commoninc.h"
 #include "utils.h"
 #include "bigint.h"
+#include "primes.h"
 
 enum ResultCode
 {
     PASS,
     FAIL,
+    EXECUTION_ERROR,
     UNKNOWN
+};
+
+struct TestStats
+{
+    string groupName;
+
+    TestStats(string groupNameIn) : groupName(groupNameIn), numPass(0),
+        numFail(0), numExecErr(0), numCases(0) {}
+    
+    void IncPass()
+    {
+        numPass++;
+        numCases++;
+    }
+
+    void IncFail()
+    {
+        numFail++;
+        numCases++;
+    }
+
+    void IncExecErr()
+    {
+        numExecErr++;
+        numCases++;
+    }
+
+    double GetPassPct() { return 100.0 * (double)numPass / (double)numCases; }
+    double GetFailPct() { return 100.0 * (double)numFail / (double)numCases; }
+    double GetExecErrPct() { return 100.0 * (double)numExecErr / (double)numCases; }
+
+    uint64_t numPass;
+    uint64_t numFail;
+    uint64_t numExecErr;
+    uint64_t numCases;
+
+    double passPct;
+    double failPct;
+    double execErrPct;
 };
 
 struct TestResult
@@ -28,11 +69,20 @@ TestResult TestCmpDivBigIntCorrect();
 TestResult TestCmpModBigIntCorrect();
 TestResult TestSqrtBigIntCorrect();
 
+TestResult GetNearestSquareFactors();
+
 TestResult TestDiff();
 TestResult TestPatch();
 
+TestResult TestSHA224Short();
 TestResult TestSHA256Short();
+TestResult TestSHA384Short();
 TestResult TestSHA512Short();
+
+TestResult TestSHA224Long();
+TestResult TestSHA256Long();
+TestResult TestSHA384Long();
+TestResult TestSHA512Long();
 
 TestResult TestSHA3224Short();
 TestResult TestSHA3224Long();

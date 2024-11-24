@@ -2,6 +2,11 @@
 
 #include "commoninc.h"
 
+#ifdef _WIN32
+#include "Windows.h"
+#include "bcrypt.h"
+#endif
+
 using namespace std;
 
 #define BYTES(x) (((x) / 8) + ((x) % 8 ? 1 : 0))

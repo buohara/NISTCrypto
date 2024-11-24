@@ -135,3 +135,39 @@ void FactorSemiPrimeNearestSquaresBigInt(BigInt &n, BigInt& p1, BigInt& p2)
         root++;
     }
 }
+
+/**
+ * GenerateNearestSquareFactors - Given a maximum N, factor each integer M less than or equal to
+ * N and get the factors (not necessarily prime) that are closest to the square root of M.
+ *
+ * @param max       [in]    Get nearest square factors for all numbers m with 0 <= m <= max.
+ * @param nsFacs    [in]    List of nearest square factors.
+ */
+
+void GenerateNearestSquareFactors(const uint64_t max, vector<NearestSquareFactors> &nsFacs)
+{
+    uint64_t sqrtStrt = 2;
+
+    nsFacs.push_back({ 0, 0, 0, 0, 0, });
+    nsFacs.push_back({ 1, 1, 1, 0, 0, });
+
+    for (uint64_t i = 2; i <= max; i++)
+    {
+        while (sqrtStrt * sqrtStrt < i)
+            sqrtStrt++;
+
+        uint64_t cur = sqrtStrt;
+
+        while ((i % cur) != 0)
+            cur--;
+
+        nsFacs.push_back({ 
+            i,
+            sqrt(i),
+            cur, 
+            i / cur,
+            (log(cur) / log(i)), 
+            (log(i / cur) / log(i))
+        });
+    }
+}

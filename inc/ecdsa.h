@@ -2,6 +2,7 @@
 
 #include "commoninc.h"
 #include "bigint.h"
+#include "sha.h"
 
 using namespace std;
 
@@ -73,6 +74,12 @@ struct ECPoint
     }
 };
 
+struct DigSign
+{
+    BigInt r;
+    BigInt s;
+};
+
 struct DomainParams
 {
     BigInt q;
@@ -94,4 +101,10 @@ struct EllipticCurve
 
     ECPoint MultiplyBase(BigInt k);
     ECPoint Add(ECPoint r, ECPoint s);
+    
+    DigSign GenerateSignature(
+        vector<uint8_t> &msg, 
+        BigInt d,
+        SHASize sz
+    );
 };

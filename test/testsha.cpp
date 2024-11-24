@@ -122,8 +122,6 @@ static void LoadTestVecsFromFile(const string file, SHATestVecs& vecs)
 
 static TestResult RunSHAMessageTest(string testVecFile, SHASize sz)
 {
-    assert(sz == SHA256 || sz == SHA512);
-
     TestResult res;
     SHATestVecs vecs;
 
@@ -133,16 +131,13 @@ static TestResult RunSHAMessageTest(string testVecFile, SHASize sz)
     {
         SHA2 sha;
         vector<uint8_t> mdOut;
-
-        if (sz == SHA256)
-            sha.Hash256(vecs.msgs[i], mdOut);
-        else
-            sha.Hash512(vecs.msgs[i], mdOut);
+        sha.Hash(sz, vecs.msgs[i], mdOut);
 
         if (mdOut.size() != vecs.mds[i].size() ||
             (memcmp(&mdOut[0], &vecs.mds[i][0], mdOut.size()) != 0))
         {
             char msg[256];
+            assert(false);
 
             string mdOutStr;
             HexArrayToString(mdOut, mdOutStr, false);
@@ -196,11 +191,7 @@ static TestResult RunSHAMonte(string testVecFile, SHASize sz)
 
         for (uint64_t j = 0; j < 1000; j++)
         {
-            if (sz == SHA256)
-                sha.Hash256(msg, mdOut);
-            else
-                sha.Hash512(msg, mdOut);
-
+            sha.Hash(sz, vecs.msgs[i], mdOut);
             msg = mdOut;
             mdOut.resize(0);
         }
@@ -263,6 +254,7 @@ static TestResult RunSHA3MessageTest(string testVecFile, SHASize sz)
             (memcmp(&mdOut[0], &vecs.mds[i][0], mdOut.size()) != 0))
         {
             char msg[256];
+            assert(false);
 
             string mdOutStr;
             HexArrayToString(mdOut, mdOutStr, false);
@@ -325,6 +317,7 @@ static TestResult RunSHA3Monte(string testVecFile, SHASize sz)
             (memcmp(&mdOut[0], &vecs.mds[i][0], mdOut.size()) != 0))
         {
             char msg[256];
+            assert(false);
 
             string mdOutStr;
             HexArrayToString(mdOut, mdOutStr);
@@ -351,6 +344,25 @@ static TestResult RunSHA3Monte(string testVecFile, SHASize sz)
 }
 
 /**
+ * TestSHA224Short - Compute a SHA224 hash for a short input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA224Short()
+{
+    SHATestVecs vecs;
+
+    TestResult res = RunSHAMessageTest(
+        "test/shabytetestvectors/SHA224ShortMsg.rsp",
+        SHA224
+    );
+
+    return res;
+}
+
+/**
  * TestSHA256Short - Compute a SHA256 hash for a short input and compare
  * against known value.
  *
@@ -370,6 +382,25 @@ TestResult TestSHA256Short()
 }
 
 /**
+ * TestSHA384Short - Compute a SHA384 hash for a short input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA384Short()
+{
+    SHATestVecs vecs;
+
+    TestResult res = RunSHAMessageTest(
+        "test/shabytetestvectors/SHA384ShortMsg.rsp",
+        SHA384
+    );
+
+    return res;
+}
+
+/**
  * TestSHA512Short - Compute a SHA512 hash for a short input and compare
  * against known value.
  *
@@ -382,6 +413,82 @@ TestResult TestSHA512Short()
 
     TestResult res = RunSHAMessageTest(
         "test/shabytetestvectors/SHA512ShortMsg.rsp",
+        SHA512
+    );
+
+    return res;
+}
+
+/**
+ * TestSHA224Long - Compute a SHA224 hash for a long input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA224Long()
+{
+    SHATestVecs vecs;
+
+    TestResult res = RunSHAMessageTest(
+        "test/shabytetestvectors/SHA224LongMsg.rsp",
+        SHA224
+    );
+
+    return res;
+}
+
+/**
+ * TestSHA256Long - Compute a SHA256 hash for a long input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA256Long()
+{
+    SHATestVecs vecs;
+
+    TestResult res = RunSHAMessageTest(
+        "test/shabytetestvectors/SHA256LongMsg.rsp",
+        SHA256
+    );
+
+    return res;
+}
+
+/**
+ * TestSHA384Long - Compute a SHA384 hash for a long input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA384Long()
+{
+    SHATestVecs vecs;
+
+    TestResult res = RunSHAMessageTest(
+        "test/shabytetestvectors/SHA384LongMsg.rsp",
+        SHA384
+    );
+
+    return res;
+}
+
+/**
+ * TestSHA512Short - Compute a SHA512 hash for a long input and compare
+ * against known value.
+ *
+ * @return  Pass if hash matches, fail otherwise.
+ */
+
+TestResult TestSHA512Long()
+{
+    SHATestVecs vecs;
+
+    TestResult res = RunSHAMessageTest(
+        "test/shabytetestvectors/SHA512LongMsg.rsp",
         SHA512
     );
 

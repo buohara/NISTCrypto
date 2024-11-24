@@ -154,7 +154,8 @@ uint8_t Parity(uint8_t val)
 }
 
 /**
- * GenKey - Return a **NON-SECURE** cryptographic key for testing algorithms.
+ * GenKey - Return a cryptographic key for testing algorithms. Uses secure BCRYPT
+ * RNG for Windows. Uses **NON-SECURE** cstdlib rand() for other platforms.
  * This routine uses srand to generate "random" bytes. However, the randonmess
  * of srand is not considered strong enough for security applications.
  *
@@ -164,10 +165,29 @@ uint8_t Parity(uint8_t val)
 
 void GenKey(const uint64_t bitLen, vector<uint8_t>& keyOut)
 {
+    assert((bitLen > 0) && (bitLen % 8 == 0));
+    keyOut.resize(bitLen / 8);
+
+#ifdef _WIN32
+
+    BCRYPT_ALG_HANDLE hAlgorithm = NULL;
+
+    NTSTATUS status = BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_RNG_ALGORITHM, NULL, 0);
+    assert(status == 0);
+
+    status          = BCryptGenRandom(hAlgorithm, &keyOut[0], bitLen, 0);
+    assert(status == 0);
+        
+    BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+
+#else
+
     assert((bitLen) % 8 == 0);
     const uint64_t nBytes = bitLen / 8;
     keyOut.resize(nBytes);
 
     for (uint64_t i = 0; i < nBytes; i++)
         keyOut[i] = rand() % 256;
+
+#endif
 }

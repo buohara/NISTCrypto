@@ -50,6 +50,10 @@ enum PrintMode
 
 struct SHA2
 {
+    void Hash(SHASize sz, vector<uint8_t>& msg, vector<uint8_t>& md);
+
+private:
+
     uint32_t ch32(uint32_t x, uint32_t y, uint32_t z);
     uint32_t maj32(uint32_t x, uint32_t y, uint32_t z);
     uint32_t Sig032(uint32_t x);
@@ -64,7 +68,9 @@ struct SHA2
     uint64_t sig064(uint64_t x);
     uint64_t sig164(uint64_t x);
 
+    void Hash224(vector<uint8_t>& msg, vector<uint8_t>& md);
     void Hash256(vector<uint8_t>& msg, vector<uint8_t>& md);
+    void Hash384(vector<uint8_t>& msg, vector<uint8_t>& md);
     void Hash512(vector<uint8_t>& msg, vector<uint8_t>& md);
 };
 

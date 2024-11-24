@@ -99,8 +99,8 @@ void SHAStreamer::SetData(vector<uint8_t>& dataIn, bool bLittleEndian)
             for (uint64_t i = sizeIn; i-- > 0;)
                 data[sizeIn - i - 1] = dataIn[i];
 
-    data[sizeIn]        |= 0x06;
-    data[sizeIn - 1]    |= 0x80;
+    data[sizeIn]            |= 0x06;
+    data[data.size() - 1]   |= 0x80;
 }
 
 /**
@@ -320,6 +320,144 @@ uint64_t SHA2::sig164(uint64_t x)
     return ROTR64(x, 19) ^ ROTR64(x, 61) ^ (x >> 6);
 }
 
+void SHA2::Hash(SHASize sz, vector<uint8_t>& msg, vector<uint8_t>& md)
+{
+    switch (sz)
+    {
+        case SHA224:
+
+            Hash224(msg, md);
+            break;
+
+        case SHA256:
+
+            Hash256(msg, md);
+            break;
+
+        case SHA384:
+
+            Hash384(msg, md);
+            break;
+
+        case SHA512:
+
+            Hash512(msg, md);
+            break;
+
+        default:
+            break;
+    }
+}
+
+/**
+ * SHA2::Hash224 - Compute the SHA224 of an input message.
+ *
+ * @param msg       [in]        Message to be hashed.
+ * @param md        [in/out]    Computed MD of input message.
+ */
+
+void SHA2::Hash224(vector<uint8_t>& msg, vector<uint8_t>& md)
+{
+    assert(md.size() == 0);
+
+    const uint64_t sz               = msg.size();
+    const uint64_t l                = 8 * sz;
+    const uint32_t blockBits        = 512;
+    const uint32_t blockBytes       = 64;
+    const uint32_t scheduleWords    = 64;
+    uint32_t padBytes               = (blockBits - (l % blockBits)) / 8;
+
+    if (padBytes <= 8)
+        padBytes += blockBytes;
+
+    vector<uint8_t> tmp(sz + padBytes);
+
+    if (sz)
+        memcpy(&tmp[0], &msg[0], sz);
+
+    tmp[sz > 0 ? sz : 0] = 0x80;
+
+    for (uint32_t i = 0; i < tmp.size() / 4; i++)
+    {
+        uint8_t a       = tmp[4 * i];
+        tmp[4 * i]      = tmp[4 * i + 3];
+        tmp[4 * i + 3]  = a;
+
+        a               = tmp[4 * i + 1];
+        tmp[4 * i + 1]  = tmp[4 * i + 2];
+        tmp[4 * i + 2]  = a;
+    }
+
+    memcpy(&tmp[tmp.size() - 4], &l, 4);
+    const uint64_t n = tmp.size() / blockBytes;
+
+    uint32_t H[8] =
+    {
+        0xc1059ed8,
+        0x367cd507,
+        0x3070dd17,
+        0xf70e5939,
+        0xffc00b31,
+        0x68581511,
+        0x64f98fa7,
+        0xbefa4fa4
+    };
+
+    for (uint32_t i = 0; i < n; i++)
+    {
+        uint32_t w[scheduleWords];
+
+        memcpy(&w[0], &tmp[blockBytes * i], blockBytes);
+
+        for (uint32_t t = 16; t < scheduleWords; t++)
+            w[t] = sig132(w[t - 2]) + w[t - 7] + sig032(w[t - 15]) + w[t - 16];
+
+        uint32_t a = H[0];
+        uint32_t b = H[1];
+        uint32_t c = H[2];
+        uint32_t d = H[3];
+        uint32_t e = H[4];
+        uint32_t f = H[5];
+        uint32_t g = H[6];
+        uint32_t h = H[7];
+
+        for (uint32_t t = 0; t < scheduleWords; t++)
+        {
+            uint32_t T1 = h + Sig132(e) + ch32(e, f, g) + shaConst32[t] + w[t];
+            uint32_t T2 = Sig032(a) + maj32(a, b, c);
+            h = g;
+            g = f;
+            f = e;
+            e = d + T1;
+            d = c;
+            c = b;
+            b = a;
+            a = T1 + T2;
+        }
+
+        H[0] = a + H[0];
+        H[1] = b + H[1];
+        H[2] = c + H[2];
+        H[3] = d + H[3];
+        H[4] = e + H[4];
+        H[5] = f + H[5];
+        H[6] = g + H[6];
+        H[7] = h + H[7];
+    }
+
+    H[0] = REVERSE_ENDIAN32(H[0]);
+    H[1] = REVERSE_ENDIAN32(H[1]);
+    H[2] = REVERSE_ENDIAN32(H[2]);
+    H[3] = REVERSE_ENDIAN32(H[3]);
+    H[4] = REVERSE_ENDIAN32(H[4]);
+    H[5] = REVERSE_ENDIAN32(H[5]);
+    H[6] = REVERSE_ENDIAN32(H[6]);
+    H[7] = REVERSE_ENDIAN32(H[7]);
+
+    md.resize(28);
+    memcpy(&md[0], &H[0], 28);
+}
+
 /**
  * SHA2::Hash256 - Compute the SHA256 of an input message.
  *
@@ -428,6 +566,123 @@ void SHA2::Hash256(vector<uint8_t>& msg, vector<uint8_t>& md)
 
     md.resize(32);
     memcpy(&md[0], &H[0], 32);
+}
+
+/**
+ * SHA2::Hash384 - Compute the SHA384 of an input message.
+ *
+ * @param msg       [in]        Message to be hashed.
+ * @param md        [in/out]    Computed MD of input message.
+ */
+
+void SHA2::Hash384(vector<uint8_t>& msg, vector<uint8_t>& md)
+{
+    assert(md.size() == 0);
+
+    const uint64_t sz               = msg.size();
+    const uint32_t scheduleWords    = 80;
+    const uint32_t blockBits        = 1024;
+    const uint32_t blockBytes       = 128;
+    const uint64_t l                = 8 * sz;
+    uint64_t padBytes               = (blockBits - (l % blockBits)) / 8;
+
+    if (padBytes <= 16)
+        padBytes += 128;
+
+    vector<uint8_t> tmp(sz + padBytes);
+
+    if (sz)
+        memcpy(&tmp[0], &msg[0], sz);
+
+    tmp[sz > 0 ? sz : 0] = 0x80;
+
+    for (uint64_t i = 0; i < tmp.size() / 8; i++)
+    {
+        uint8_t a       = tmp[8 * i];
+        tmp[8 * i]      = tmp[8 * i + 7];
+        tmp[8 * i + 7]  = a;
+
+        a               = tmp[8 * i + 1];
+        tmp[8 * i + 1]  = tmp[8 * i + 6];
+        tmp[8 * i + 6]  = a;
+
+        a               = tmp[8 * i + 2];
+        tmp[8 * i + 2]  = tmp[8 * i + 5];
+        tmp[8 * i + 5]  = a;
+
+        a               = tmp[8 * i + 3];
+        tmp[8 * i + 3]  = tmp[8 * i + 4];
+        tmp[8 * i + 4]  = a;
+    }
+
+    memcpy(&tmp[tmp.size() - 8], &l, 8);
+
+    const uint64_t n = tmp.size() / blockBytes;
+
+    uint64_t H[8] =
+    {
+        0xcbbb9d5dc1059ed8,
+        0x629a292a367cd507,
+        0x9159015a3070dd17,
+        0x152fecd8f70e5939,
+        0x67332667ffc00b31,
+        0x8eb44a8768581511,
+        0xdb0c2e0d64f98fa7,
+        0x47b5481dbefa4fa4,
+    };
+
+    for (uint64_t i = 0; i < n; i++)
+    {
+        uint64_t w[scheduleWords];
+        memcpy(&w[0], &tmp[blockBytes * i], blockBytes);
+
+        for (uint64_t t = 16; t < scheduleWords; t++)
+            w[t] = sig164(w[t - 2]) + w[t - 7] + sig064(w[t - 15]) + w[t - 16];
+
+        uint64_t a = H[0];
+        uint64_t b = H[1];
+        uint64_t c = H[2];
+        uint64_t d = H[3];
+        uint64_t e = H[4];
+        uint64_t f = H[5];
+        uint64_t g = H[6];
+        uint64_t h = H[7];
+
+        for (uint64_t t = 0; t < scheduleWords; t++)
+        {
+            uint64_t T1 = h + Sig164(e) + ch64(e, f, g) + shaConst64[t] + w[t];
+            uint64_t T2 = Sig064(a) + maj64(a, b, c);
+            h = g;
+            g = f;
+            f = e;
+            e = d + T1;
+            d = c;
+            c = b;
+            b = a;
+            a = T1 + T2;
+        }
+
+        H[0] = a + H[0];
+        H[1] = b + H[1];
+        H[2] = c + H[2];
+        H[3] = d + H[3];
+        H[4] = e + H[4];
+        H[5] = f + H[5];
+        H[6] = g + H[6];
+        H[7] = h + H[7];
+    }
+
+    H[0] = REVERSE_ENDIAN64(H[0]);
+    H[1] = REVERSE_ENDIAN64(H[1]);
+    H[2] = REVERSE_ENDIAN64(H[2]);
+    H[3] = REVERSE_ENDIAN64(H[3]);
+    H[4] = REVERSE_ENDIAN64(H[4]);
+    H[5] = REVERSE_ENDIAN64(H[5]);
+    H[6] = REVERSE_ENDIAN64(H[6]);
+    H[7] = REVERSE_ENDIAN64(H[7]);
+
+    md.resize(48);
+    memcpy(&md[0], &H[0], 48);
 }
 
 /**

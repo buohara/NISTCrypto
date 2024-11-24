@@ -31,5 +31,8 @@
     <ClCompile Include="test\testaes.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="test\testnum.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

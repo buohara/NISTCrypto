@@ -33,6 +33,21 @@ map<NISTCurve, DPStrings> curveDomainParams =
 };
 
 /**
+ * GetModInverse - Solve for the modular inverse k^-1 mod n 
+ * using the euclidean algorithm. Needed for ECDSA signature generation.
+ *
+ * @param   k   [in] Value whose inverse to compute.
+ * @param   n   [in] Modulus for the inverse.
+ * 
+ * @return  Inverse of k mod n.
+ */
+
+static BigInt GetModInverse(BigInt k, BigInt n)
+{
+
+}
+
+/**
  * DomainParams - Elliptic curve domain paramater constructor.
  *
  * @param   dpStrings   [in] List of domain parameter strings.
@@ -55,7 +70,7 @@ DomainParams::DomainParams(DPStrings &dpStrings) :
  *
  * @param   k   [in]    Per message k value.
  *
- * @return R = kG.
+ * @return Sum of r and s over this curve.
  */
 
 ECPoint EllipticCurve::Add(ECPoint r, ECPoint s)
@@ -103,13 +118,13 @@ ECPoint EllipticCurve::MultiplyBase(BigInt k)
                 res.y += R.y;
             }
 
-            BigInt lambda = (BigInt(3) * R.x * R.x + params.a) / (BigInt(2) * R.y);
+            BigInt lambda   = (BigInt(3) * R.x * R.x + params.a) / (BigInt(2) * R.y);
             lambda %= params.q;
 
-            BigInt x = lambda * lambda - BigInt(2) * R.x;
+            BigInt x        = lambda * lambda - BigInt(2) * R.x;
             x %= params.q;
 
-            BigInt y = lambda * (R.x - x) - R.y;
+            BigInt y        = lambda * (R.x - x) - R.y;
             y %= params.q;
 
             R.x = x;
@@ -118,4 +133,35 @@ ECPoint EllipticCurve::MultiplyBase(BigInt k)
     }
 
     return R;
+}
+
+/**
+ * EllipticCurve::GenerateSignature - Generate an ECDSA signature
+ * for a given message M and private key d.
+ *
+ * @param   msg     [in]    Message M to sign.
+ * @param   d       [in]    Private key of signer.
+ * @param   sz      [in]    SHA size to use when hashing message for signing.
+ * 
+ * @return  The digital signature pair (r, s) for input message M and private key d.
+ */
+
+DigSign EllipticCurve::GenerateSignature(vector<uint8_t>& msg, BigInt d, SHASize sz)
+{
+    vector<uint8_t> md;
+    SHA2 sha;
+    sha.Hash(sz, msg, md);
+
+    const uint64_t n = params.n.nBits;
+    BigInt e;
+
+    if (n < 8 * md.size())
+        md.resize(n / 8);
+
+    e = BigInt(md);
+
+    vector<uint8_t> kData;
+    GenKey(n, kData);
+
+
 }

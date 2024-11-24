@@ -16,7 +16,7 @@ static FILE *gpLogFile          = nullptr;
 
 struct TestArgs
 {
-    vector<uint64_t> testIDs;
+    vector<uint64_t> testGroupIDs;
 };
 
 map<ResultCode, string> ResultCodeStrings =
@@ -47,6 +47,16 @@ TestGroupList testGroups =
     },
 
     {
+        {
+            "Number",
+            "Number Experiments"
+        },
+        {
+            { "GenerateNearestSquareFactors", GetNearestSquareFactors }
+        },
+    },
+
+    {
         { 
             "Diff",
             "File version diff and patch unit tests."
@@ -63,7 +73,9 @@ TestGroupList testGroups =
             "Hash algorithm unit tests."
         },
         {
+            { "TestSHA224Short",            TestSHA224Short },
             { "TestSHA256Short",            TestSHA256Short },
+            { "TestSHA384Short",            TestSHA384Short },
             { "TestSHA512Short",            TestSHA512Short },
             { "TestSHA3224Short",           TestSHA3224Short },
             { "TestSHA3224Long",            TestSHA3224Long },
@@ -216,7 +228,7 @@ void ParseCommandLine(vector<string> &args, TestArgs &argsOut)
             {
                 if (IsNumeric(testString[j]))
                 {
-                    argsOut.testIDs.push_back(testString[j] - '0');
+                    argsOut.testGroupIDs.push_back(testString[j] - '0');
                     continue;
                 }
 
@@ -300,6 +312,45 @@ static void LogMessage(const char* format, ...)
 }
 
 /**
+ * PrintStats - Print a summary of test group pass/fail rates and total pass/fail rates.
+ *
+ * @param runStats        [in]  List of test group pass/fail rates.
+ */
+
+static void PrintStats(vector<TestStats>& runStats)
+{
+    uint64_t runPass        = 0;
+    uint64_t runFail        = 0;
+    uint64_t runExecErr     = 0;
+    uint64_t runCases       = 0;
+
+    for (uint64_t i = 0; i < runStats.size(); i++)
+    {
+        runPass     += runStats[i].numPass;
+        runFail     += runStats[i].numFail;
+        runExecErr  += runStats[i].numExecErr;
+        runCases    += runStats[i].numCases;
+    }
+
+    printf("\nSummary:\n\n");
+    printf("Total Groups: %llu\n", runStats.size());
+    printf("Total Cases: %llu\n", runCases);
+    printf("Pass: %llu/%llu (%3.2f%%)\n", runPass, runCases, 100.0 * ((double)runPass/(double)runCases));
+    printf("Fail: %llu/%llu (%3.2f%%)\n", runFail, runCases, 100.0 * ((double)runFail / (double)runCases));
+    printf("Execution Errors: %llu/%llu (%3.2f%%)\n\n", runExecErr, runCases, 100.0 * ((double)runExecErr / (double)runCases));
+
+    printf("Test Group Summary:\n\n");
+
+    for (uint64_t i = 0; i < runStats.size(); i++)
+    {
+        printf("'%s'\n", runStats[i].groupName.c_str());
+        printf("Pass: %llu/%llu (%3.2f%%)\n", runStats[i].numPass, runStats[i].numCases, runStats[i].GetPassPct());
+        printf("Fail: %llu/%llu (%3.2f%%)\n", runStats[i].numFail, runStats[i].numCases, runStats[i].GetFailPct());
+        printf("Execution Errors: %llu/%llu (%3.2f%%)\n\n", runStats[i].numExecErr, runStats[i].numCases, runStats[i].GetExecErrPct());
+    }
+}
+
+/**
  * main - Print off usage and list of available tests.
  *
  * @param argc  [in]    Number of command line arguments.
@@ -310,48 +361,59 @@ static void LogMessage(const char* format, ...)
 
 void RunTests(TestArgs& args)
 {
-    InitLogFile();
     srand(time(nullptr));
 
-    for (uint64_t i = 0; i < args.testIDs.size(); i++)
+    const uint64_t numTestGroups = args.testGroupIDs.size();
+    vector<TestStats> runStats;
+
+    for (uint64_t i = 0; i < numTestGroups; i++)
     {
-        uint64_t groupID        = args.testIDs[i] - 1;
-        string groupName        = testGroups[groupID].first.first;
-        TestGroupCases& cases   = testGroups[groupID].second;
+        uint64_t groupID                = args.testGroupIDs[i] - 1;
+        string groupName                = testGroups[groupID].first.first;
+        TestGroupCases& groupCases      = testGroups[groupID].second;
+        const uint64_t numGroupCases    = groupCases.size();
 
-        LogMessage("Beginning test group %s...\n\n", groupName.c_str());
+        TestStats groupStats(groupName);
 
-        if (args.testIDs[i] > testGroups.size())
+        if (groupID - 1 > testGroups.size())
             throw invalid_argument("Invalid test group ID encountered running Handshake tests.");
 
-        for (uint64_t j = 0; j < cases.size(); j++)
+        for (uint64_t j = 0; j < numGroupCases; j++)
         {
-            LogMessage("Beginning test %s...\n\n", cases[j].first.c_str());
-            pfnTestFunc pfnTest = cases[j].second;
+            string caseName     = groupCases[j].first.c_str();
+            pfnTestFunc pfnCase = groupCases[j].second;
+
+            printf("Executing test group '%s' (%llu/%llu) - Test case '%s' (%llu/%llu)\n",
+                groupName.c_str(),
+                i + 1,
+                numTestGroups,
+                caseName.c_str(),
+                j + 1,
+                numGroupCases
+            );
 
             try
             {
-                TestResult res = pfnTest();
+                TestResult res = pfnCase();
 
                 for (uint64_t k = 0; k < res.caseResults.size(); k++)
                 {
-                    LogMessage("Case %llu %s %s\n", k, ResultCodeStrings[res.caseResults[k].first].c_str(),
-                        res.caseResults[k].second.c_str());
+                    if (res.caseResults[k].first == PASS)
+                        groupStats.IncPass();
+                    else
+                        groupStats.IncFail();
                 }
             }
             catch (exception& e)
             {
-                LogMessage("Exception encountered in Handshake tests: '%s'. Continuing to next case.\n",
-                    e.what());
+                groupStats.IncExecErr();
             }
-
-            LogMessage("\n");
         }
 
-        LogMessage("\n");
+        runStats.push_back(groupStats);
     }
 
-    CloseLogFile();
+    PrintStats(runStats);
 }
 
 /**
