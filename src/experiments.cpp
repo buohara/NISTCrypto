@@ -1,55 +1,9 @@
-#include "primes.h"
-
-/**
- * Seive - Generate a list of prime numbers between min and max.
- * 
- * @param min       [in] Lower end of the prime range, inclusive.
- * @param max       [in] Upper end of the prime range, inclusive.
- * @param primes    [in/out] List of generated primes to populate. Assumed empty on input.
- */
-
-void Seive(const uint64_t min, const uint64_t max, vector<uint64_t> &primes)
-{
-    if (min > max)
-        throw invalid_argument("Prime seive search range min argument greater than max");
-
-    if (primes.size() != 0)
-        throw invalid_argument("Prime seive expects prime list argument to be empty");
-
-    uint64_t primeCnt = 0;
-    vector<bool> composites(max - min + 1, false);
-
-    if (min == 0)
-        composites[0] = composites[1] = true;
-
-    if (min == 1)
-        composites[0] = true;
-
-    for (uint64_t i = 2; i * i <= max; i++)
-    {
-        uint64_t offset = (i < min) ? ((i * (min / i)) + (min % i ? i : 0) - min) : 2 * i;
-
-        for (uint64_t j = offset; j < composites.size(); j += i)
-            composites[j] = true;
-    }
-
-    for (uint64_t i = 0; i < composites.size(); i++)
-    {
-        if (!composites[i])
-            primeCnt++;
-    }
-
-    primes.resize(primeCnt);
-    uint64_t offset = 0;
-
-    for (uint64_t i = 0; i < composites.size(); i++)
-        if (!composites[i])
-            primes[offset++] = i + min;
-}
+#include "experiments.h"
+#include "test.h"
 
 /**
  * IsSquare - Determine if an input integer is square.
- * 
+ *
  * @param val   [in] Value to check for wquareness.
  */
 
@@ -67,7 +21,7 @@ __inline bool IsSquare(const uint64_t val)
  * Find candidate solutions x = -b +- sqrt(b^2 + N) for some b to be determined. First,
  * find square numbers A > N such that N - A is a square number b^2, then use b to find
  * prime factors x via the above formula.
- * 
+ *
  * @param n     [in] Input value to be factored.
  * @param p1    [in/out] First prime divisor of n, if found, zero otherwise. Assumed zero on input.
  * @param p1    [in/out] Second prime divisor of n, if found, zero otherwise. Assumed zero on input.
@@ -81,8 +35,8 @@ void FactorSemiPrimeNearestSquares64(const uint64_t n, uint64_t& p1, uint64_t& p
     if (p2 != 0)
         throw invalid_argument("Expected input p2 to FactorSemiPrimeNearestSquares to be zero");
 
-    double val      = (double)n;
-    uint64_t root   = (uint64_t)floor(sqrt(val));
+    double val = (double)n;
+    uint64_t root = (uint64_t)floor(sqrt(val));
 
     root++;
 
@@ -92,9 +46,9 @@ void FactorSemiPrimeNearestSquares64(const uint64_t n, uint64_t& p1, uint64_t& p
 
         if (IsSquare(diff))
         {
-            double b    = sqrt((double)diff);
-            p1          = (uint64_t)(-b + sqrt(b * b + n));
-            p2          = n / p1;
+            double b = sqrt((double)diff);
+            p1 = (uint64_t)(-b + sqrt(b * b + n));
+            p2 = n / p1;
 
             return;
         }
@@ -114,7 +68,7 @@ void FactorSemiPrimeNearestSquares64(const uint64_t n, uint64_t& p1, uint64_t& p
  * @param p1    [in/out] Second prime divisor of n, if found, zero otherwise. Assumed zero on input.
  */
 
-void FactorSemiPrimeNearestSquaresBigInt(BigInt &n, BigInt& p1, BigInt& p2)
+void FactorSemiPrimeNearestSquaresBigInt(BigInt& n, BigInt& p1, BigInt& p2)
 {
     BigInt root = n.Sqrt();
     root++;
@@ -125,9 +79,9 @@ void FactorSemiPrimeNearestSquaresBigInt(BigInt &n, BigInt& p1, BigInt& p2)
 
         if (IsSquareBigInt(diff))
         {
-            BigInt b    = diff.Sqrt();
-            p1          = (b * b + n).Sqrt() - b;
-            p2          = n / p1;
+            BigInt b = diff.Sqrt();
+            p1 = (b * b + n).Sqrt() - b;
+            p2 = n / p1;
 
             return;
         }
@@ -144,7 +98,7 @@ void FactorSemiPrimeNearestSquaresBigInt(BigInt &n, BigInt& p1, BigInt& p2)
  * @param nsFacs    [in]    List of nearest square factors.
  */
 
-void GenerateNearestSquareFactors(const uint64_t max, vector<NearestSquareFactors> &nsFacs)
+void GenerateNearestSquareFactors(const uint64_t max, vector<NearestSquareFactors>& nsFacs)
 {
     uint64_t sqrtStrt = 2;
 
@@ -161,13 +115,48 @@ void GenerateNearestSquareFactors(const uint64_t max, vector<NearestSquareFactor
         while ((i % cur) != 0)
             cur--;
 
-        nsFacs.push_back({ 
+        nsFacs.push_back({
             i,
             sqrt(i),
-            cur, 
+            cur,
             i / cur,
-            (log(cur) / log(i)), 
+            (log(cur) / log(i)),
             (log(i / cur) / log(i))
-        });
+            });
     }
+}
+
+/**
+ * GetNearestSquareFactors - 
+ */
+
+TestResult GetNearestSquareFactors()
+{
+    TestResult res;
+
+    FILE* pFile = fopen("doc/logs/nsfacs.txt", "w");
+
+    if (pFile == nullptr)
+        assert(false);
+
+    vector<NearestSquareFactors> nsFacs;
+    GenerateNearestSquareFactors(1000000, nsFacs);
+
+    res.caseResults.push_back({ PASS, "" });
+
+    for (uint32_t i = 0; i < nsFacs.size(); i++)
+    {
+        fprintf(
+            pFile,
+            "%llu, %3.4f, %llu, %llu, %3.4f, %3.4f,\n",
+            nsFacs[i].n,
+            nsFacs[i].sqrt,
+            nsFacs[i].p1,
+            nsFacs[i].p2,
+            nsFacs[i].lP1,
+            nsFacs[i].lP2
+        );
+    }
+
+    return res;
 }

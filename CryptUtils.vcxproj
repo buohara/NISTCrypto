@@ -144,7 +144,6 @@
     <ClInclude Include="inc\aes.h" />
     <ClInclude Include="inc\ecdsa.h" />
     <ClInclude Include="inc\sha.h" />
-    <ClInclude Include="inc\primes.h" />
     <ClInclude Include="inc\utils.h" />
   </ItemGroup>
   <ItemGroup>
@@ -153,7 +152,6 @@
     <ClCompile Include="src\aes.cpp" />
     <ClCompile Include="src\ecdsa.cpp" />
     <ClCompile Include="src\sha.cpp" />
-    <ClCompile Include="src\primes.cpp" />
     <ClCompile Include="src\utils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

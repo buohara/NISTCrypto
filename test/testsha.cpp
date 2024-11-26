@@ -5,7 +5,7 @@ const uint64_t numCases = 100;
 
 enum SHA_TEST_MODE
 {
-    MSG,
+    SHA_MSG,
     MONTE,
     NUM_MODES
 };
@@ -17,7 +17,7 @@ struct SHATestVecs
     vector<vector<uint8_t>> msgs;
     vector<vector<uint8_t>> mds;
 
-    SHATestVecs() : mode(MSG) {}
+    SHATestVecs() : mode(SHA_MSG) {}
 };
 
 /**
@@ -59,7 +59,7 @@ static void LoadTestVecsFromFile(const string file, SHATestVecs& vecs)
 
         if (regex_search(line, match, reMsg))
         {
-            vecs.mode = MSG;
+            vecs.mode = SHA_MSG;
             vector<uint8_t> msg;
             StringToHexArray(match[1], msg, false);
 
@@ -107,7 +107,7 @@ static void LoadTestVecsFromFile(const string file, SHATestVecs& vecs)
         }
     }
 
-    if (vecs.mode == MSG)
+    if (vecs.mode == SHA_MSG)
         assert(vecs.msgs.size() == vecs.mds.size());
 }
 

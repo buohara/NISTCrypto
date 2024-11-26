@@ -3,7 +3,6 @@
 #include "commoninc.h"
 #include "utils.h"
 #include "bigint.h"
-#include "primes.h"
 
 enum ResultCode
 {

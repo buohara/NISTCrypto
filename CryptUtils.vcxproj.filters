@@ -20,9 +20,6 @@
     <ClInclude Include="inc\sha.h">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="inc\primes.h">
-      <Filter>inc</Filter>
-    </ClInclude>
     <ClInclude Include="inc\aes.h">
       <Filter>inc</Filter>
     </ClInclude>
@@ -41,9 +38,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\sha.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\primes.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\aes.cpp">

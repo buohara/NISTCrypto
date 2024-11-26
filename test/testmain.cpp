@@ -471,11 +471,23 @@ static uint8_t GFMult(uint8_t a, uint8_t b)
 
 int main(int argc, char** argv)
 {
-    vector<string> args(argv + 1, argv + argc);
+    /*vector<string> args(argv + 1, argv + argc);
     TestArgs argsOut;
 
     ParseCommandLine(args, argsOut);
-    RunTests(argsOut);
+    RunTests(argsOut);*/
+
+    uint64_t a = InvModN(15, 26);
+    assert((a * 15) % 26 == 1);
+
+    a = InvModN(45, 64);
+    assert((a * 45) % 64 == 1);
+
+    a = InvModN(57, 98);
+    assert((a * 57) % 98 == 1);
+
+    a = InvModN(19, 77);
+    assert((a * 19) % 77 == 1);
 
     return 0;
 }

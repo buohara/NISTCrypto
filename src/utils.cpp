@@ -191,3 +191,89 @@ void GenKey(const uint64_t bitLen, vector<uint8_t>& keyOut)
 
 #endif
 }
+
+/**
+ * Seive - Generate a list of prime numbers between min and max.
+ *
+ * @param min       [in] Lower end of the prime range, inclusive.
+ * @param max       [in] Upper end of the prime range, inclusive.
+ * @param primes    [in/out] List of generated primes to populate. Assumed empty on input.
+ */
+
+void Seive(const uint64_t min, const uint64_t max, vector<uint64_t>& primes)
+{
+    if (min > max)
+        throw invalid_argument("Prime seive search range min argument greater than max");
+
+    if (primes.size() != 0)
+        throw invalid_argument("Prime seive expects prime list argument to be empty");
+
+    uint64_t primeCnt = 0;
+    vector<bool> composites(max - min + 1, false);
+
+    if (min == 0)
+        composites[0] = composites[1] = true;
+
+    if (min == 1)
+        composites[0] = true;
+
+    for (uint64_t i = 2; i * i <= max; i++)
+    {
+        uint64_t offset = (i < min) ? ((i * (min / i)) + (min % i ? i : 0) - min) : 2 * i;
+
+        for (uint64_t j = offset; j < composites.size(); j += i)
+            composites[j] = true;
+    }
+
+    for (uint64_t i = 0; i < composites.size(); i++)
+        if (!composites[i])
+            primeCnt++;
+
+    primes.resize(primeCnt);
+    uint64_t offset = 0;
+
+    for (uint64_t i = 0; i < composites.size(); i++)
+        if (!composites[i])
+            primes[offset++] = i + min;
+}
+
+/**
+ * InvModN - Compute the inverse of  k mod n using the
+ * Euclidean algorithm.
+ * 
+ * @param k     [in] Value whose inverse is to be computed.
+ * @param n     [in] Modulus for inverse.
+ */
+
+uint64_t InvModN(const uint64_t k, const uint64_t n)
+{
+    uint64_t a = n;
+    uint64_t b = k;
+    uint64_t q = 0;
+    uint64_t r = 0;
+
+    vector<uint64_t> remainders = { a, b };
+    vector<int64_t> coeffsT     = { 0, 1 };
+
+    while (1)
+    {
+        q = a / b;
+        r = a % b;
+        
+        if (r == 0)
+            break;
+
+        remainders.push_back(r);
+        coeffsT.push_back(coeffsT[coeffsT.size() - 2] - q * coeffsT[coeffsT.size() - 1]);
+
+        a = b;
+        b = r;
+    }
+
+    assert(remainders[remainders.size() - 1] == 1);
+
+    if (coeffsT[coeffsT.size() - 1] < 0)
+        coeffsT[coeffsT.size() - 1] += n;
+
+    return coeffsT[coeffsT.size() - 1];
+}

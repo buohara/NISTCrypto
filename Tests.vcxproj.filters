@@ -14,6 +14,9 @@
     <ClInclude Include="inc\test.h">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="inc\experiments.h">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="test\testbigint.cpp">
@@ -32,6 +35,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="test\testnum.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\experiments.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

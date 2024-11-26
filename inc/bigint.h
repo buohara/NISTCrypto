@@ -39,6 +39,7 @@ struct BigInt
     BigInt& operator/=(const BigInt& rhs);
     BigInt& operator/=(const uint8_t rhs);
     BigInt& operator%=(const BigInt& rhs);
+    BigInt operator%(const BigInt& rhs) const;
     BigInt operator/(const BigInt& rhs) const;
     BigInt& operator++(int rhs);
     BigInt& operator--(int rhs);

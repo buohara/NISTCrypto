@@ -1037,6 +1037,21 @@ BigInt& BigInt::operator%=(const BigInt& rhs)
 }
 
 /**
+ * BigInt::operator% - Integer multiplication operator.
+ *
+ * @param rhs   [in] Int to multiply this one by.
+ *
+ * @return  Product of this and rhs.
+ */
+
+BigInt BigInt::operator%(const BigInt& rhs) const
+{
+    BigInt res = *this;
+    res %= rhs;
+    return res;
+}
+
+/**
  * BigInt::operator/= - BigInt compound division operator.
  *
  * @param rhs   [in] Divisor.

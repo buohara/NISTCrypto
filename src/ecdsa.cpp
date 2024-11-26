@@ -44,7 +44,35 @@ map<NISTCurve, DPStrings> curveDomainParams =
 
 static BigInt GetModInverse(BigInt k, BigInt n)
 {
+    BigInt a = n;
+    BigInt b = k;
+    BigInt q = 0;
+    BigInt r = 0;
 
+    vector<BigInt> remainders   = { a, b };
+    vector<BigInt> coeffsT      = { 0, 1 };
+
+    while (1)
+    {
+        q = a / b;
+        r = a % b;
+
+        if (r == 0)
+            break;
+
+        remainders.push_back(r);
+        coeffsT.push_back(coeffsT[coeffsT.size() - 2] - q * coeffsT[coeffsT.size() - 1]);
+
+        a = b;
+        b = r;
+    }
+
+    assert(remainders[remainders.size() - 1] == 1);
+
+    if (coeffsT[coeffsT.size() - 1] < 0)
+        coeffsT[coeffsT.size() - 1] += n;
+
+    return coeffsT[coeffsT.size() - 1];
 }
 
 /**
@@ -163,5 +191,5 @@ DigSign EllipticCurve::GenerateSignature(vector<uint8_t>& msg, BigInt d, SHASize
     vector<uint8_t> kData;
     GenKey(n, kData);
 
-
+    return DigSign({BigInt(0), BigInt(0)});
 }
