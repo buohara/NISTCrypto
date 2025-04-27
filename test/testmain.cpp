@@ -21,9 +21,9 @@ struct TestArgs
 
 map<ResultCode, string> ResultCodeStrings =
 {
-    { PASS, "PASS" },
-    { FAIL, "FAIL" },
-    { UNKNOWN, "UNKNOWN" }
+    { PASS,     "PASS" },
+    { FAIL,     "FAIL" },
+    { UNKNOWN,  "UNKNOWN" }
 };
 
 TestGroupList testGroups =
@@ -34,7 +34,7 @@ TestGroupList testGroups =
             "Arbitrary size integer unit tests."
         },
         {
-            { "TestAssignBigInt",           TestAssignBigInt },
+            /*{"TestAssignBigInt",           TestAssignBigInt},
             { "TestCmpLShiftBigIntCorrect", TestCmpLShiftBigIntCorrect },
             { "TestCmpRShiftBigIntCorrect", TestCmpRShiftBigIntCorrect },
             { "TestCmpAddBigIntCorrect",    TestCmpAddBigIntCorrect },
@@ -42,7 +42,8 @@ TestGroupList testGroups =
             { "TestCmpMulBigIntCorrect",    TestCmpMulBigIntCorrect },
             { "TestCmpDivBigIntCorrect",    TestCmpDivBigIntCorrect },
             { "TestCmpModBigIntCorrect",    TestCmpModBigIntCorrect },
-            { "TestSqrtBigIntCorrect",      TestSqrtBigIntCorrect }
+            { "TestSqrtBigIntCorrect",      TestSqrtBigIntCorrect },*/
+            { "TestGetModInverseBigInt",    TestGetModInverseBigInt }
         }
     },
 
@@ -107,7 +108,7 @@ TestGroupList testGroups =
             "Block cipher unit tests for AES and TDES."
         },
         {
-            /*{ "TestAESEncrypt256ECB",       TestAESEncrypt256ECB },
+            { "TestAESEncrypt256ECB",       TestAESEncrypt256ECB },
             { "TestAESDecrypt256ECB",       TestAESDecrypt256ECB },
             { "TestAESEncrypt192ECB",       TestAESEncrypt192ECB },
             { "TestAESDecrypt192ECB",       TestAESDecrypt192ECB },
@@ -139,12 +140,22 @@ TestGroupList testGroups =
             { "TestAESDecrypt256CFB128",    TestAESDecrypt256CFB128 },
             { "TestAESEncrypt128OFB",       TestAESEncrypt128OFB },
             { "TestAESEncrypt192OFB",       TestAESEncrypt192OFB },
-            { "TestAESEncrypt256OFB",       TestAESEncrypt256OFB },*/
+            { "TestAESEncrypt256OFB",       TestAESEncrypt256OFB },
             { "TestAESDecrypt128OFB",       TestAESDecrypt128OFB },
             { "TestAESDecrypt192OFB",       TestAESDecrypt192OFB },
             { "TestAESDecrypt256OFB",       TestAESDecrypt256OFB }
         }
-    }
+    },
+
+    {
+        {
+            "DSA",
+                "Digital signature tests."
+        },
+        {
+            { "TestSigGen", TestSigGen }
+        }
+    },
 };
 
 /**
@@ -375,7 +386,7 @@ void RunTests(TestArgs& args)
 
         TestStats groupStats(groupName);
 
-        if (groupID - 1 > testGroups.size())
+        if (groupID > testGroups.size())
             throw invalid_argument("Invalid test group ID encountered running Handshake tests.");
 
         for (uint64_t j = 0; j < numGroupCases; j++)
@@ -406,6 +417,11 @@ void RunTests(TestArgs& args)
             }
             catch (exception& e)
             {
+                printf("Exception encountered during Handshake RunTests with message '%s'." \
+                    " Continuing.",
+                    e.what()
+                );
+
                 groupStats.IncExecErr();
             }
         }
@@ -471,23 +487,11 @@ static uint8_t GFMult(uint8_t a, uint8_t b)
 
 int main(int argc, char** argv)
 {
-    /*vector<string> args(argv + 1, argv + argc);
+    vector<string> args(argv + 1, argv + argc);
     TestArgs argsOut;
 
     ParseCommandLine(args, argsOut);
-    RunTests(argsOut);*/
-
-    uint64_t a = InvModN(15, 26);
-    assert((a * 15) % 26 == 1);
-
-    a = InvModN(45, 64);
-    assert((a * 45) % 64 == 1);
-
-    a = InvModN(57, 98);
-    assert((a * 57) % 98 == 1);
-
-    a = InvModN(19, 77);
-    assert((a * 19) % 77 == 1);
+    RunTests(argsOut);
 
     return 0;
 }

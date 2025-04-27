@@ -49,3 +49,5 @@ struct BigInt
 
 void BigIntRand(uint64_t nBits, BigInt& bigInt);
 bool IsSquareBigInt(const BigInt& i);
+BigInt GetModInverse(BigInt k, BigInt n);
+BigInt GetGCD(BigInt aIn, BigInt bIn);

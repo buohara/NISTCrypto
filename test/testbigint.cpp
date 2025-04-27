@@ -564,8 +564,16 @@ TestResult TestCmpDivBigIntCorrect()
 
             if (!(a == tmp))
             {
+
+#ifdef _DEBUG
+                __debugbreak();
+
+                tmp = a;
+                tmp *= b;
+                tmp /= b;
+#endif
+
                 char msg[256];
-                assert(false);
 
                 sprintf(
                     msg,
@@ -610,13 +618,20 @@ TestResult TestCmpModBigIntCorrect()
 
             BigInt q = a;
             BigInt r = a;
-            q /= b;
-            r %= b;
+            q       /= b;
+            r       %= b;
 
             if (a != ((q * b) + r))
             {
+#ifdef _DEBUG
+                __debugbreak();
+
+                q = a;
+                r = a;
+                q /= b;
+                r %= b;
+#endif
                 char msg[256];
-                assert(false);
 
                 sprintf(
                     msg,
@@ -672,6 +687,74 @@ TestResult TestSqrtBigIntCorrect()
                     "BigInt square root failed. Expected = %s, actual = %s",
                     a.GetHexString().c_str(),
                     root.GetHexString().c_str()
+                );
+
+                res.caseResults.push_back({ FAIL, string(msg) });
+            }
+            else
+            {
+                res.caseResults.push_back({ PASS, "" });
+            }
+        }
+    }
+
+
+    return res;
+}
+
+/**
+ * TestGetModInverseBigInt - Test big integer modular inverses. Generate random BigInt pairs (n, k)
+ * of various known sizes, check if they're coprime and if so, compute k^-1 mod n. Check
+ * k * k^-1 = 1 mod n.
+ *
+ * @return  Pass if squareroots match, fail otherwise.
+ */
+
+TestResult TestGetModInverseBigInt()
+{
+    TestResult res;
+
+    for (uint64_t i = 1; i < nSizes; i++)
+    {
+        for (uint64_t j = 0; j < numCasesPerSize; j++)
+        {
+            //BigInt n;
+            //BigInt k;
+
+            BigInt n(4096300225);
+            BigInt k(48);
+
+            while (1)
+            {
+                //BigIntRand(testIntBitSizes[i], n);
+                //BigIntRand(testIntBitSizes[i - 1], k);
+
+                BigInt gcd = GetGCD(n, k);
+
+                if (gcd == 1)
+                    break;
+            }
+
+            BigInt kInv = GetModInverse(k, n);
+            BigInt prod = k * kInv;
+
+            if (!((prod % n) == 1))
+            {
+#ifdef _DEBUG
+                __debugbreak();
+                
+                kInv = GetModInverse(k, n);
+                prod = k * kInv;
+                prod %= n;
+#endif
+
+                char msg[256];
+
+                sprintf(
+                    msg,
+                    "BigInt modular inverse failed with n = %s, k = %s",
+                    n.GetHexString().c_str(),
+                    k.GetHexString().c_str()
                 );
 
                 res.caseResults.push_back({ FAIL, string(msg) });

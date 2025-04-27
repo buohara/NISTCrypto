@@ -67,6 +67,7 @@ TestResult TestCmpMulBigIntCorrect();
 TestResult TestCmpDivBigIntCorrect();
 TestResult TestCmpModBigIntCorrect();
 TestResult TestSqrtBigIntCorrect();
+TestResult TestGetModInverseBigInt();
 
 TestResult GetNearestSquareFactors();
 
@@ -144,3 +145,5 @@ TestResult TestAESEncrypt256OFB();
 TestResult TestAESDecrypt128OFB();
 TestResult TestAESDecrypt192OFB();
 TestResult TestAESDecrypt256OFB();
+
+TestResult TestSigGen();

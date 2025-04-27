@@ -20,7 +20,6 @@ enum FieldRep
 
 enum NISTCurve
 {
-    P192,
     P224,
     P256,
     P384,
@@ -57,7 +56,7 @@ struct ECPoint
 
     ECPoint(BigInt xIn, BigInt yIn) : x(xIn), y(yIn) {}
 
-    ECPoint(ECPoint& rhs)
+    ECPoint(const ECPoint& rhs)
     {
         x = rhs.x;
         y = rhs.y;
@@ -91,13 +90,25 @@ struct DomainParams
     BigInt n;
     BigInt h;
 
-    DomainParams(DPStrings &dpStrings);
+    DomainParams(DPStrings &dpStrings) : 
+        q(dpStrings.q, 16),
+        curveType(dpStrings.curveType),
+        fr(dpStrings.fr),
+        a(dpStrings.a, 16),
+        b(dpStrings.b, 16),
+        G{ { dpStrings.Gx, 16 }, { dpStrings.Gy, 16 } },
+        n(dpStrings.n, 16),
+        h(dpStrings.h, 16)
+    {
+    }
 };
 
 struct EllipticCurve
 {
     DomainParams params;
     ECPoint G;
+
+    EllipticCurve(DomainParams& paramsIn) : params(paramsIn) {}
 
     ECPoint MultiplyBase(BigInt k);
     ECPoint Add(ECPoint r, ECPoint s);

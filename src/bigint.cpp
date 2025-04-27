@@ -380,7 +380,7 @@ bool BigInt::operator!=(const BigInt& rhs) const
 
 bool BigInt::operator==(const uint64_t rhs)
 {
-    uint64_t nBitsRhs = (uint64_t)(log2(rhs) + 1);
+    uint64_t nBitsRhs = rhs == 0 ? 1 : (uint64_t)(log2(rhs) + 1);
     uint64_t rhsBytes = BYTES(nBitsRhs);
 
     if (rhsBytes != data.size())
@@ -744,7 +744,6 @@ BigInt BigInt::operator-(const BigInt& rhs) const
     return res;
 }
 
-
 /**
  * BigInt::operator*= - Compound integer multiplication.
  *
@@ -968,7 +967,6 @@ BigInt& BigInt::operator%=(const BigInt& rhs)
 #ifdef BIGINT_DIV_BRUTE
 
     BigInt rem = *this;
-    BigInt res(0);
 
     while (1)
     {
@@ -990,7 +988,6 @@ BigInt& BigInt::operator%=(const BigInt& rhs)
             i++;
 
         i--;
-        res += (i * quot);
         rem -= (i * cur);
 
         if (rem < rhs)
@@ -1236,4 +1233,82 @@ bool IsSquareBigInt(const BigInt& i)
         return true;
 
     return false;
+}
+
+/**
+ * GetGCD - Compute the GCD of two big integers a and b.
+ *
+ * @param   aIn   [in] First GCD arg.
+ * @param   bIn   [in] Second GCD arg.
+ *
+ * @return  Largest value that divides both a nd b.
+ */
+
+BigInt GetGCD(BigInt aIn, BigInt bIn)
+{
+    BigInt a = aIn;
+    BigInt b = bIn;
+    BigInt q = 0;
+    BigInt r = 0;
+
+    vector<BigInt> remainders = { a, b };
+
+    while (1)
+    {
+        q = a / b;
+        r = a % b;
+
+        if (r == 0)
+            break;
+
+        remainders.push_back(r);
+
+        a = b;
+        b = r;
+    }
+
+    return remainders[remainders.size() - 1];
+}
+
+/**
+ * GetModInverse - Solve for the modular inverse k^-1 mod n
+ * using the euclidean algorithm. Needed for ECDSA signature generation.
+ *
+ * @param   k   [in] Value whose inverse to compute.
+ * @param   n   [in] Modulus for the inverse.
+ *
+ * @return  Inverse of k mod n.
+ */
+
+BigInt GetModInverse(BigInt k, BigInt n)
+{
+    BigInt a = n;
+    BigInt b = k;
+    BigInt q = 0;
+    BigInt r = 0;
+
+    vector<BigInt> remainders = { a, b };
+    vector<BigInt> coeffsT = { 0, 1 };
+
+    while (1)
+    {
+        q = a / b;
+        r = a % b;
+
+        if (r == 0)
+            break;
+
+        remainders.push_back(r);
+        coeffsT.push_back(coeffsT[coeffsT.size() - 2] - q * coeffsT[coeffsT.size() - 1]);
+
+        a = b;
+        b = r;
+    }
+
+    assert(remainders[remainders.size() - 1] == 1);
+
+    if (coeffsT[coeffsT.size() - 1] < 0)
+        coeffsT[coeffsT.size() - 1] += n;
+
+    return coeffsT[coeffsT.size() - 1];
 }

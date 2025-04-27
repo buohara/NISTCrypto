@@ -34,10 +34,10 @@
     <ClCompile Include="test\testaes.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="test\testnum.cpp">
+    <ClCompile Include="src\experiments.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\experiments.cpp">
+    <ClCompile Include="src\testdsa.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

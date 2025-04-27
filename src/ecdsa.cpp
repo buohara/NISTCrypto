@@ -33,67 +33,6 @@ map<NISTCurve, DPStrings> curveDomainParams =
 };
 
 /**
- * GetModInverse - Solve for the modular inverse k^-1 mod n 
- * using the euclidean algorithm. Needed for ECDSA signature generation.
- *
- * @param   k   [in] Value whose inverse to compute.
- * @param   n   [in] Modulus for the inverse.
- * 
- * @return  Inverse of k mod n.
- */
-
-static BigInt GetModInverse(BigInt k, BigInt n)
-{
-    BigInt a = n;
-    BigInt b = k;
-    BigInt q = 0;
-    BigInt r = 0;
-
-    vector<BigInt> remainders   = { a, b };
-    vector<BigInt> coeffsT      = { 0, 1 };
-
-    while (1)
-    {
-        q = a / b;
-        r = a % b;
-
-        if (r == 0)
-            break;
-
-        remainders.push_back(r);
-        coeffsT.push_back(coeffsT[coeffsT.size() - 2] - q * coeffsT[coeffsT.size() - 1]);
-
-        a = b;
-        b = r;
-    }
-
-    assert(remainders[remainders.size() - 1] == 1);
-
-    if (coeffsT[coeffsT.size() - 1] < 0)
-        coeffsT[coeffsT.size() - 1] += n;
-
-    return coeffsT[coeffsT.size() - 1];
-}
-
-/**
- * DomainParams - Elliptic curve domain paramater constructor.
- *
- * @param   dpStrings   [in] List of domain parameter strings.
- */
-
-DomainParams::DomainParams(DPStrings &dpStrings) :
-    q(dpStrings.q, 16),
-    curveType(dpStrings.curveType),
-    fr(dpStrings.fr),
-    a(dpStrings.a, 16),
-    b(dpStrings.b, 16),
-    G{ { dpStrings.Gx, 16 }, { dpStrings.Gy, 16 } },
-    n(dpStrings.n, 16),
-    h(dpStrings.h, 16) 
-{
-}
-
-/**
  * EllipticCurve::Add - Add two points on an elliptic curve.
  *
  * @param   k   [in]    Per message k value.
@@ -191,5 +130,15 @@ DigSign EllipticCurve::GenerateSignature(vector<uint8_t>& msg, BigInt d, SHASize
     vector<uint8_t> kData;
     GenKey(n, kData);
 
-    return DigSign({BigInt(0), BigInt(0)});
+    BigInt k(kData);
+    BigInt kInv = GetModInverse(k, params.n);
+
+    ECPoint R   = MultiplyBase(k);
+    BigInt r    = R.x;
+    r           %= params.n;
+
+    BigInt s    = kInv * (e + r * d);
+    s           %= params.n;
+
+    return DigSign({ r, s });
 }

@@ -26,8 +26,6 @@ struct SHATestVecs
  *
  * @param file  [in]        Path to test vector file.
  * @param vects [in/out]    List of test vecs to populate.
- *
- * @return  Pass if hash matches, fail otherwise.
  */
 
 static void LoadTestVecsFromFile(const string file, SHATestVecs& vecs)
