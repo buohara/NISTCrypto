@@ -136,10 +136,9 @@ AESStreamer::AESStreamer(AESMode modeIn) : bitOffset(0), mode(modeIn)
  * to the bitrate set for the current AES mode.
  *
  * @param dataIn            [in] Message data to encrypt.
- * @param bLittleEndian     [in] True if input data is in little endian order.
  */
 
-void AESStreamer::SetData(const vector<uint8_t>& dataIn, bool bLittleEndian)
+void AESStreamer::SetData(const vector<uint8_t>& dataIn)
 {
     const uint32_t rateBytes    = (r <= 8) ? 1 : 16;
     const uint32_t sizeIn       = dataIn.size();
@@ -149,8 +148,6 @@ void AESStreamer::SetData(const vector<uint8_t>& dataIn, bool bLittleEndian)
     {
         data.resize(sizeIn + padBytes);
         memcpy(&data[0], &dataIn[0], sizeIn);
-
-        uint32_t curVal = 0;
 
         if (mode == ECB || mode == CBC || mode == CFB128)
         {
@@ -243,7 +240,7 @@ bool AESStreamer::End()
  * @param sz [in]   AES key size to use.
  */
 
-AES::AES(AESSize sz, AESMode modeIn) : w{0}, mode(modeIn), stream(modeIn)
+AES::AES(AESSize sz, AESMode modeIn) : stream(modeIn), mode(modeIn), w{0}
 {
     switch (sz)
     {
@@ -674,7 +671,6 @@ void AES::ExpandKey(const vector<uint32_t>& key)
         {
             tmp = RotLeft32(tmp, 1);
             tmp = SBox(tmp);
-            uint32_t rc = rcs[i / nk];
             tmp ^= rcs[i / nk];
         }
         else if ((nk == 8) && (i % nk == 4))
@@ -792,7 +788,7 @@ void AES::EncryptECBCBC(const vector<uint8_t>& plainTxtIn, vector<uint8_t>& ciph
     ciphTxtOut.resize(plainTxtIn.size());
     uint32_t offset = 0;
 
-    stream.SetData(plainTxtIn, false);
+    stream.SetData(plainTxtIn);
     ExpandKey(key);
 
     while (!stream.End())
@@ -862,7 +858,7 @@ void AES::DecryptECBCBC(const vector<uint8_t>& ciphTxtIn, vector<uint8_t>& plain
     plainTxtOut.resize(ciphTxtIn.size());
     uint32_t offset = 0;
 
-    stream.SetData(ciphTxtIn, false);
+    stream.SetData(ciphTxtIn);
     ExpandKey(key);
 
     while (!stream.End())
@@ -974,8 +970,6 @@ void AES::UpdateInputBlock(const uint32_t s)
 {
     assert(s == 1 || s == 8 || s == 128);
 
-    uint32_t update = 0;
-
     switch (s)
     {
     case 1:
@@ -1012,8 +1006,6 @@ void AES::UpdateInputBlock(const uint32_t s)
 void AES::UpdateInputBlock(const uint32_t s, const uint32_t txt[4])
 {
     assert(s == 1 || s == 8 || s == 128);
-
-    uint32_t update = 0;
 
     switch (s)
     {
@@ -1086,7 +1078,7 @@ void AES::EncryptCFB(const vector<uint8_t>& plainTxtIn, const uint32_t s,
     assert(s == 1 || s == 8 || s == 128);
 
     ciphTxtOut.resize(plainTxtIn.size());
-    stream.SetData(plainTxtIn, false);
+    stream.SetData(plainTxtIn);
     ExpandKey(key);
 
     uint32_t writeOffset = 0;
@@ -1141,7 +1133,7 @@ void AES::DecryptCFB(const vector<uint8_t>& ciphTxtIn, const uint32_t s,
     assert(s == 1 || s == 8 || s == 128);
 
     plainTxtOut.resize(ciphTxtIn.size());
-    stream.SetData(ciphTxtIn, false);
+    stream.SetData(ciphTxtIn);
     ExpandKey(key);
 
     uint32_t writeOffset = 0;
@@ -1194,7 +1186,7 @@ void AES::EncryptOFB(const vector<uint8_t>& plainTxtIn,
     assert(ciphTxtOut.size() == 0);
 
     ciphTxtOut.resize(plainTxtIn.size());
-    stream.SetData(plainTxtIn, false);
+    stream.SetData(plainTxtIn);
     ExpandKey(key);
 
     uint32_t writeOffset = 0;
@@ -1259,7 +1251,7 @@ void AES::DecryptOFB(const vector<uint8_t>& ciphTxtIn,
     assert(plainTxtOut.size() == 0);
 
     plainTxtOut.resize(ciphTxtIn.size());
-    stream.SetData(ciphTxtIn, false);
+    stream.SetData(ciphTxtIn);
     ExpandKey(key);
 
     uint32_t writeOffset = 0;

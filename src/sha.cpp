@@ -93,11 +93,13 @@ void SHAStreamer::SetData(vector<uint8_t>& dataIn, bool bLittleEndian)
     data.resize(sizeIn + padBytes);
 
     if (sizeIn)
+    {
         if (bLittleEndian)
             memcpy(&data[0], &dataIn[0], sizeIn);
         else
             for (uint64_t i = sizeIn; i-- > 0;)
                 data[sizeIn - i - 1] = dataIn[i];
+    }
 
     data[sizeIn]            |= 0x06;
     data[data.size() - 1]   |= 0x80;
@@ -906,14 +908,14 @@ void SHA3::ClearState()
  * SHA3::PrintLanesU64 - Print the state array.
  */
 
-void SHA3::PrintState(PrintMode mode)
+void SHA3::PrintState(PrintMode)
 {
     if (1)
     {
         for (uint64_t x = 0; x < STATE_W; x++)
         {
             for (uint64_t y = 0; y < STATE_H; y++)
-                printf("(%llu, %llu) = 0x%016llx\n", x, y, state[LANE(x, y)]);
+                printf("(%lu, %lu) = 0x%016lx\n", x, y, state[LANE(x, y)]);
 
             printf("\n");
         }

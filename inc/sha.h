@@ -90,7 +90,7 @@ struct SHA3Params
         r(576), d(512), w(64), l(6), n(24) {}
 
     SHA3Params(SHASize szIn, uint64_t bIn, uint64_t cIn, uint64_t rIn, 
-        uint64_t dIn, uint64_t wIn, uint64_t lIn, uint64_t nIn) : sz(szIn),
+        uint64_t dIn, uint64_t, uint64_t lIn, uint64_t nIn) : sz(szIn),
         b(bIn), c(cIn), r(rIn), d(dIn), w(dIn), l(lIn), n(nIn) 
     {
         assert(r + c == b);

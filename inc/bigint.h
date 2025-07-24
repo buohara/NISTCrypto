@@ -14,6 +14,7 @@ struct BigInt
     BigInt(string val, uint64_t base);
     BigInt(vector<uint8_t>& dataIn);
     BigInt(uint64_t val);
+    BigInt(const BigInt& other);
 
     string GetDecimalString();
     string GetBinaryString();

@@ -3,9 +3,18 @@
 #define BIGINT_DIV_BRUTE 1
 
 static void DivideU8(const BigInt& dividend, const uint8_t divisor, BigInt& quotient, uint8_t& rem);
-static void AddBinaryStrings(const string& u1, const string& u2, vector<uint8_t> &sum);
-static void SubtractBinaryStrings(const string& u1, const string& u2, vector<uint8_t>& sum);
-static void MultiplyBinaryStrings(const string& u1, const string& u2, string& prod);
+
+/**
+ * BigInt - Copy constructor. Create a new BigInt from another BigInt.
+ * 
+ * @param rhs       [in] BigInt to copy.
+ */
+
+BigInt::BigInt(const BigInt& rhs)
+{
+    nBits   = rhs.nBits;
+    data    = rhs.data;
+}
 
 /**
  * ParseBinaryString - Convert an integer represented as a binary string to a
@@ -411,10 +420,12 @@ bool BigInt::operator>(const BigInt &rhs) const
 
     for (uint64_t i = data.size(); i-- > 0;)
         if (data[i] != rhs.data[i])
+        {
             if (data[i] > rhs.data[i])
                 return true;
             else
                 return false;
+        }
 
     return false;
 }
@@ -437,10 +448,12 @@ bool BigInt::operator<(const BigInt& rhs) const
 
     for (uint64_t i = data.size(); i-- > 0;)
         if (data[i] != rhs.data[i])
+        {
             if (data[i] < rhs.data[i])
                 return true;
             else
                 return false;
+        }
 
     return false;
 }
@@ -466,10 +479,12 @@ bool BigInt::operator>=(const BigInt& rhs) const
 
     for (uint64_t i = data.size(); i-- > 0;)
         if (data[i] != rhs.data[i])
+        {
             if (data[i] > rhs.data[i])
                 return true;
             else
                 return false;
+        }
 
     return false;
 }
@@ -494,11 +509,15 @@ bool BigInt::operator<=(const BigInt& rhs) const
         return true;
 
     for (uint64_t i = data.size(); i-- > 0;)
+    {
         if (data[i] != rhs.data[i])
+        {
             if (data[i] < rhs.data[i])
                 return true;
             else
                 return false;
+        }
+    }
 
     return false;
 }
@@ -1089,7 +1108,7 @@ BigInt BigInt::operator/(const BigInt& rhs) const
  * @return This int + 1.
  */
 
-BigInt& BigInt::operator++(int rhs)
+BigInt& BigInt::operator++(int)
 {
     uint8_t carry       = 1;
 
@@ -1118,7 +1137,7 @@ BigInt& BigInt::operator++(int rhs)
  * @return This int - 1.
  */
 
-BigInt& BigInt::operator--(int rhs)
+BigInt& BigInt::operator--(int)
 {
     for (uint64_t i = 0; i < data.size(); i++)
     {

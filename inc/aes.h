@@ -32,7 +32,7 @@ struct AESStreamer
     AESStreamer() : bitOffset(0), r(128), mode(ECB) {};
     AESStreamer(AESMode modeIn);
 
-    void SetData(const vector<uint8_t>& dataIn, bool bLittleEndian = true);
+    void SetData(const vector<uint8_t>& dataIn);
     void Reset();
     void Next(uint32_t block[4]);
     bool End();
