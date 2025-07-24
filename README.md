@@ -2,9 +2,9 @@ NISTCrypto
 
 A collection of FIPS cryptographic algorithm implementations in C++. Tested on Ubuntu 22.04. Supported algorithms:
 
-- SHA-2 (https://csrc.nist.gov/pubs/fips/180-4/upd1/final)
-- SHA-3 (https://csrc.nist.gov/pubs/fips/202/final)
-- AES (https://csrc.nist.gov/pubs/fips/197/final) - Including ECB, CBC, CFB, and OFB modes.
+    SHA2-224/256/384/512     (https://csrc.nist.gov/pubs/fips/180-4/upd1/final)
+    SHA3-224/256/384/512     (https://csrc.nist.gov/pubs/fips/202/final)
+    AES - ECB/CBC/CFB/OFB    (https://csrc.nist.gov/pubs/fips/197/final)
 
 File structure:
 
