@@ -1,1 +1,28 @@
-A collection of FIPS cryptographic algorithm implementations in C++.
+NISTCrypto
+
+A collection of FIPS cryptographic algorithm implementations in C++. Supported algorithms:
+
+- SHA-2 (https://csrc.nist.gov/pubs/fips/180-4/upd1/final)
+- SHA-3 (https://csrc.nist.gov/pubs/fips/202/final)
+- AES (https://csrc.nist.gov/pubs/fips/197/final) - Including ECB, CBC, CFB, and OFB modes.
+
+File structure:
+
+    NISTCrypto/
+    |
+    |--src/     # Algorithm and helper source.
+    |--inc/     # Headers
+    |--test/    # Test source and folders of NIST test vectors.
+
+Algorithm tests below use NIST test vectors available at https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/.
+
+Usage: ./NISTCrypto [-r <x,y,z...>] [-o <path>]
+
+    -r    Run a comma-separated list of numbered test groups, e.g., '-r 1,3,4'. See test groups below.
+    -o    Output test log file.
+
+Available Test Groups:
+
+    1 - BigInt: Arbitrary size integer unit tests. BigInts used for cryptographic algorithms.
+    2 - Hash: SHA224/256/384/512 and SHA3 tests.
+    3 - Block Cipher: AES tests.

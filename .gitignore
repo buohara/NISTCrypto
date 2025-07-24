@@ -369,3 +369,6 @@ doc/handshake.bbl
 doc/handshake.blg
 doc/handshake.synctex.gz
 doc/SHA3NIST.pdf
+.vscode/
+output.txt
+NISTCrypto

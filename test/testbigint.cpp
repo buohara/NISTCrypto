@@ -573,7 +573,7 @@ TestResult TestCmpDivBigIntCorrect()
                 tmp /= b;
 #endif
 
-                char msg[256];
+                char msg[512];
 
                 sprintf(
                     msg,

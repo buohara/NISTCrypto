@@ -71,8 +71,8 @@ static void LoadTestVecsFromFile(const string file, vector<DSATestVec> &vecs)
     smatch match;
 
     DSATestVec curVec;
-    NISTCurve curCurve;
-    SHASize curSHA;
+    NISTCurve curCurve  = P256;
+    SHASize curSHA      = SHA256;
 
     while (fgets(buf, sizeof(buf), pFile) != NULL)
     {

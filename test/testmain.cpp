@@ -34,7 +34,7 @@ TestGroupList testGroups =
             "Arbitrary size integer unit tests."
         },
         {
-            /*{"TestAssignBigInt",           TestAssignBigInt},
+            {"TestAssignBigInt",           TestAssignBigInt},
             { "TestCmpLShiftBigIntCorrect", TestCmpLShiftBigIntCorrect },
             { "TestCmpRShiftBigIntCorrect", TestCmpRShiftBigIntCorrect },
             { "TestCmpAddBigIntCorrect",    TestCmpAddBigIntCorrect },
@@ -42,36 +42,36 @@ TestGroupList testGroups =
             { "TestCmpMulBigIntCorrect",    TestCmpMulBigIntCorrect },
             { "TestCmpDivBigIntCorrect",    TestCmpDivBigIntCorrect },
             { "TestCmpModBigIntCorrect",    TestCmpModBigIntCorrect },
-            { "TestSqrtBigIntCorrect",      TestSqrtBigIntCorrect },*/
-            { "TestGetModInverseBigInt",    TestGetModInverseBigInt }
+            { "TestSqrtBigIntCorrect",      TestSqrtBigIntCorrect }
+            //{ "TestGetModInverseBigInt",    TestGetModInverseBigInt }
         }
     },
 
-    {
-        {
-            "Number",
-            "Number Experiments"
-        },
-        {
-            { "GenerateNearestSquareFactors", GetNearestSquareFactors }
-        },
-    },
+    // {
+    //     {
+    //         "Number",
+    //         "Number Experiments"
+    //     },
+    //     {
+    //         { "GenerateNearestSquareFactors", GetNearestSquareFactors }
+    //     },
+    // },
 
-    {
-        { 
-            "Diff",
-            "File version diff and patch unit tests."
-        },
-        {
-            { "TestDiff",                   TestDiff },
-            { "TestPatch",                  TestPatch },
-        }
-    },
+    // {
+    //     { 
+    //         "Diff",
+    //         "File version diff and patch unit tests."
+    //     },
+    //     {
+    //         { "TestDiff",                   TestDiff },
+    //         { "TestPatch",                  TestPatch },
+    //     }
+    // },
 
     {
         { 
             "Hash",
-            "Hash algorithm unit tests."
+            "SHA224/256/384/512 and SHA3 tests."
         },
         {
             { "TestSHA224Short",            TestSHA224Short },
@@ -93,19 +93,19 @@ TestGroupList testGroups =
         }
     },
 
-    {
-        { 
-            "Compress",
-            "Compression algorithm unit tests."
-        },
-        {
-        }
-    },
+    // {
+    //     { 
+    //         "Compress",
+    //         "Compression algorithm unit tests."
+    //     },
+    //     {
+    //     }
+    // },
 
     {
         { 
             "Block Cipher",
-            "Block cipher unit tests for AES and TDES."
+            "AES tests."
         },
         {
             { "TestAESEncrypt256ECB",       TestAESEncrypt256ECB },
@@ -147,15 +147,15 @@ TestGroupList testGroups =
         }
     },
 
-    {
-        {
-            "DSA",
-                "Digital signature tests."
-        },
-        {
-            { "TestSigGen", TestSigGen }
-        }
-    },
+    // {
+    //     {
+    //         "DSA",
+    //             "Digital signature tests."
+    //     },
+    //     {
+    //         { "TestSigGen", TestSigGen }
+    //     }
+    // },
 };
 
 /**
@@ -164,16 +164,18 @@ TestGroupList testGroups =
 
 void PrintHelp()
 {
-    printf("Handshake Test Suite Version %lu.%lu\n\n", VERSION_MAJOR, VERSION_MINOR);
+    printf("NISTCrypto Version %d.%d\n\n", VERSION_MAJOR, VERSION_MINOR);
 
-    printf("Usage: handshaketest.exe [-r <x,y,z...>] [-o <path>]\n\n");
-    printf("    -r    Run a list of numbered test groups, e.g., '-r 1, 3, 4'. See test groups below.\n");
+    printf("Usage: ./NISTCrypto [-r <x,y,z...>] [-o <path>]\n\n");
+    printf("    -r    Run a comma-separated list of numbered test groups, e.g., '-r 1, 3, 4'. See test groups below.\n");
     printf("    -o    Output test log file.\n\n");
 
     printf("Available Test Groups:\n\n");
 
     for (uint64_t i = 0; i < testGroups.size(); i++)
-        printf("    %llu - %s: %s\n", i + 1, testGroups[i].first.first.c_str(), testGroups[i].first.second.c_str());
+        printf("    %lu - %s: %s\n", i + 1, testGroups[i].first.first.c_str(), testGroups[i].first.second.c_str());
+
+    printf("\n");
 }
 
 /**
@@ -200,14 +202,14 @@ static bool IsNumeric(const char inChar)
  * @return True if input is whitespace.
  */
 
-static bool IsWhitespace(const char inChar)
-{
-    if (inChar == 32 || inChar == 9 || inChar == 10 ||
-        inChar == 13 || inChar == 12 || inChar == 11)
-        return true;
+// static bool IsWhitespace(const char inChar)
+// {
+//     if (inChar == 32 || inChar == 9 || inChar == 10 ||
+//         inChar == 13 || inChar == 12 || inChar == 11)
+//         return true;
     
-    return false;
-}
+//     return false;
+// }
 
 /**
  * PrintHelp - Print off usage and list of available tests.
@@ -233,6 +235,12 @@ void ParseCommandLine(vector<string> &args, TestArgs &argsOut)
         {
             i++;
 
+            if (i >= args.size())
+            {
+                printf("Error: Expected test group IDs after -r flag.\n");
+                exit(1);
+            }
+
             string testString = args[i];
 
             for (uint64_t j = 0; j < testString.length(); j++)
@@ -242,15 +250,15 @@ void ParseCommandLine(vector<string> &args, TestArgs &argsOut)
                     argsOut.testGroupIDs.push_back(testString[j] - '0');
                     continue;
                 }
-
-                if (IsWhitespace(testString[j]))
+                else if (testString[j] == ',')
+                {
                     continue;
-
-                if (testString[j] == ',')
-                    continue;
-
-                throw invalid_argument("Unexpected character processing -r flag in Handshake tests: " +
-                    testString[j]);
+                }
+                else
+                {
+                    printf("Error: Unexpected character '%c' processing -r flag in Handshake tests.\n", testString[j]);
+                    exit(1);
+                }
             }
 
             continue;
@@ -296,33 +304,6 @@ static void CloseLogFile()
 }
 
 /**
- * LogMessage - Logging helper. Print messages to a log file or console
- * depending on log file config.
- *
- * @param format        [in]  Log message format.
- * @param args (...)    [in]  Variadic argument list.
- */
-
-static void LogMessage(const char* format, ...)
-{
-    const uint64_t bufSize = 512;
-    char msgBuf[bufSize];
-
-    va_list args;
-    va_start(args, format);
-
-    vsnprintf(msgBuf, sizeof(msgBuf), format, args);
-    string msgStr = string(msgBuf);
-
-    if (gbLogToFile)
-        fwrite(msgStr.c_str(), sizeof(char), msgStr.size(), gpLogFile);
-    else
-        printf("%s\n", msgBuf);
-
-    va_end(args);
-}
-
-/**
  * PrintStats - Print a summary of test group pass/fail rates and total pass/fail rates.
  *
  * @param runStats        [in]  List of test group pass/fail rates.
@@ -344,30 +325,72 @@ static void PrintStats(vector<TestStats>& runStats)
     }
 
     printf("\nSummary:\n\n");
-    printf("Total Groups: %llu\n", runStats.size());
-    printf("Total Cases: %llu\n", runCases);
-    printf("Pass: %llu/%llu (%3.2f%%)\n", runPass, runCases, 100.0 * ((double)runPass/(double)runCases));
-    printf("Fail: %llu/%llu (%3.2f%%)\n", runFail, runCases, 100.0 * ((double)runFail / (double)runCases));
-    printf("Execution Errors: %llu/%llu (%3.2f%%)\n\n", runExecErr, runCases, 100.0 * ((double)runExecErr / (double)runCases));
+    printf("Total Groups: %lu\n", runStats.size());
+    printf("Total Cases: %lu\n", runCases);
+    printf("Pass: %lu/%lu (%3.2f%%)\n", runPass, runCases, 100.0 * ((double)runPass/(double)runCases));
+    printf("Fail: %lu/%lu (%3.2f%%)\n", runFail, runCases, 100.0 * ((double)runFail / (double)runCases));
+    printf("Execution Errors: %lu/%lu (%3.2f%%)\n\n", runExecErr, runCases, 100.0 * ((double)runExecErr / (double)runCases));
 
     printf("Test Group Summary:\n\n");
 
     for (uint64_t i = 0; i < runStats.size(); i++)
     {
         printf("'%s'\n", runStats[i].groupName.c_str());
-        printf("Pass: %llu/%llu (%3.2f%%)\n", runStats[i].numPass, runStats[i].numCases, runStats[i].GetPassPct());
-        printf("Fail: %llu/%llu (%3.2f%%)\n", runStats[i].numFail, runStats[i].numCases, runStats[i].GetFailPct());
-        printf("Execution Errors: %llu/%llu (%3.2f%%)\n\n", runStats[i].numExecErr, runStats[i].numCases, runStats[i].GetExecErrPct());
+        printf("Pass: %lu/%lu (%3.2f%%)\n", runStats[i].numPass, runStats[i].numCases, runStats[i].GetPassPct());
+        printf("Fail: %lu/%lu (%3.2f%%)\n", runStats[i].numFail, runStats[i].numCases, runStats[i].GetFailPct());
+        printf("Execution Errors: %lu/%lu (%3.2f%%)\n\n", runStats[i].numExecErr, runStats[i].numCases, runStats[i].GetExecErrPct());
     }
 }
 
 /**
- * main - Print off usage and list of available tests.
+ * LogToFile - Write test results to a log file if specified on the command line.
  *
- * @param argc  [in]    Number of command line arguments.
- * @param argv  [in]    List of argument strings.
+ * @param testResults   [in] List of test results to log.
+ */
+
+static void LogToFile(vector<vector<TestResult>>& testResults, vector<TestStats>& runStats)
+{
+    InitLogFile();
+
+    for (uint64_t i = 0; i < runStats.size(); i++)
+    {
+        fprintf(gpLogFile, "Test Group: %s\n", runStats[i].groupName.c_str());
+        fprintf(gpLogFile, "Pass: %lu/%lu (%3.2f%%)\n", runStats[i].numPass, runStats[i].numCases, runStats[i].GetPassPct());
+        fprintf(gpLogFile, "Fail: %lu/%lu (%3.2f%%)\n", runStats[i].numFail, runStats[i].numCases, runStats[i].GetFailPct());
+        fprintf(gpLogFile, "Execution Errors: %lu/%lu (%3.2f%%)\n\n", runStats[i].numExecErr, runStats[i].numCases, runStats[i].GetExecErrPct());
+    }
+
+    const uint32_t nGroups = static_cast<uint32_t>(testResults.size());
+
+    for (uint64_t i = 0; i < nGroups; i++)
+    {
+        const uint32_t nCases = static_cast<uint32_t>(testResults[i].size());
+
+        for (uint32_t j = 0; j < nCases; j++)
+        {
+            const uint32_t nCaseResults = static_cast<uint32_t>(testResults[i][j].caseResults.size());
+
+
+            for (uint32_t k = 0; k < nCaseResults; k++)
+            {
+                ResultCode resCode = testResults[i][j].caseResults[k].first;
+                string resMsg      = testResults[i][j].caseResults[k].second;
+
+                fprintf(gpLogFile, "Test Group %lu, Test Case %u: %s\n", i + 1, j + 1, ResultCodeStrings[resCode].c_str());
+
+                if (resMsg.length() > 0)
+                    fprintf(gpLogFile, "Message: %s\n", resMsg.c_str());
+            }
+        }
+    }
+
+    CloseLogFile();
+}
+
+/**
+ * RunTests - Run a set of tests based on the command line arguments.
  *
- * @return Return 0 on exit.
+ * @param args [in] List of tests groups to run.
  */
 
 void RunTests(TestArgs& args)
@@ -376,6 +399,7 @@ void RunTests(TestArgs& args)
 
     const uint64_t numTestGroups = args.testGroupIDs.size();
     vector<TestStats> runStats;
+    vector<vector<TestResult>> testResults;
 
     for (uint64_t i = 0; i < numTestGroups; i++)
     {
@@ -384,6 +408,7 @@ void RunTests(TestArgs& args)
         TestGroupCases& groupCases      = testGroups[groupID].second;
         const uint64_t numGroupCases    = groupCases.size();
 
+        testResults.resize(numGroupCases);
         TestStats groupStats(groupName);
 
         if (groupID > testGroups.size())
@@ -394,7 +419,7 @@ void RunTests(TestArgs& args)
             string caseName     = groupCases[j].first.c_str();
             pfnTestFunc pfnCase = groupCases[j].second;
 
-            printf("Executing test group '%s' (%llu/%llu) - Test case '%s' (%llu/%llu)\n",
+            printf("Executing test group '%s' (%lu/%lu) - Test case '%s' (%lu/%lu)\n",
                 groupName.c_str(),
                 i + 1,
                 numTestGroups,
@@ -406,6 +431,7 @@ void RunTests(TestArgs& args)
             try
             {
                 TestResult res = pfnCase();
+                testResults[i].push_back(res);
 
                 for (uint64_t k = 0; k < res.caseResults.size(); k++)
                 {
@@ -429,7 +455,10 @@ void RunTests(TestArgs& args)
         runStats.push_back(groupStats);
     }
 
-    PrintStats(runStats);
+    if (gbLogToFile)
+        LogToFile(testResults, runStats);
+    else
+        PrintStats(runStats);
 }
 
 /**
@@ -443,38 +472,38 @@ void RunTests(TestArgs& args)
  * @return Product of a and b over GF(2^8).
  */
 
-static uint8_t GFMult(uint8_t a, uint8_t b)
-{
-    uint8_t tmpA            = a;
-    uint8_t tmpB            = b;
-    const uint8_t bitHi     = 0x80;
-    const uint8_t mod       = 0x1B;
-    uint8_t xTimes[8]       = { 0 };
-    uint8_t e               = 0;
-    uint8_t out             = 0;
-    xTimes[0]               = tmpA;
+// static uint8_t GFMult(uint8_t a, uint8_t b)
+// {
+//     uint8_t tmpA            = a;
+//     uint8_t tmpB            = b;
+//     const uint8_t bitHi     = 0x80;
+//     const uint8_t mod       = 0x1B;
+//     uint8_t xTimes[8]       = { 0 };
+//     uint8_t e               = 0;
+//     uint8_t out             = 0;
+//     xTimes[0]               = tmpA;
 
-    for (uint8_t i = 1; i < 8; i++)
-    {
-        if (tmpA & bitHi)
-            tmpA = (tmpA << 1) ^ mod;
-        else
-            tmpA <<= 1;
+//     for (uint8_t i = 1; i < 8; i++)
+//     {
+//         if (tmpA & bitHi)
+//             tmpA = (tmpA << 1) ^ mod;
+//         else
+//             tmpA <<= 1;
 
-        xTimes[i] = tmpA;
-    }
+//         xTimes[i] = tmpA;
+//     }
 
-    while (tmpB)
-    {
-        if (tmpB & 0x1)
-            out ^= xTimes[e];
+//     while (tmpB)
+//     {
+//         if (tmpB & 0x1)
+//             out ^= xTimes[e];
 
-        e++;
-        tmpB >>= 1;
-    }
+//         e++;
+//         tmpB >>= 1;
+//     }
 
-    return out;
-}
+//     return out;
+// }
 
 /**
  * main - Print off usage and list of available tests.

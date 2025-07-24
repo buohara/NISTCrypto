@@ -835,7 +835,7 @@ BigInt BigInt::operator*(const BigInt& rhs) const
 BigInt& BigInt::operator*=(const uint8_t rhs)
 {
     uint16_t dig;
-    uint16_t carry;
+    uint16_t carry = 0;
 
     vector<uint8_t> vals;
 
