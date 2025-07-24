@@ -43,12 +43,9 @@ struct AES
     uint32_t state[4];
     AESStreamer stream;
     AESMode mode;
-
     uint32_t nk;
     uint32_t nr;
-
     uint32_t w[64];
-
     vector<uint32_t> iv;
 
     AES(AESSize sz, AESMode modeIn);

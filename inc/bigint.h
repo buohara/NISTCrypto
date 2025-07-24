@@ -42,8 +42,8 @@ struct BigInt
     BigInt& operator%=(const BigInt& rhs);
     BigInt operator%(const BigInt& rhs) const;
     BigInt operator/(const BigInt& rhs) const;
-    BigInt& operator++(int rhs);
-    BigInt& operator--(int rhs);
+    BigInt& operator++(int);
+    BigInt& operator--(int);
     bool operator!=(const BigInt& rhs) const;
     BigInt Sqrt() const;
 };
