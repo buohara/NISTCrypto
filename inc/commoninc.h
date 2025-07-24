@@ -11,4 +11,5 @@
 #include <time.h>
 #include <assert.h>
 #include <regex>
+#include <cstring>
 #include <csignal>
