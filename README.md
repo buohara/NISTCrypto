@@ -19,6 +19,7 @@ Algorithm tests below use NIST test vectors available at https://csrc.nist.gov/p
 Build:
 
     docker build -t nistcrypto .
+    docker run --rm -it -v "$PWD":/app -w /app nistcrypto /bin/bash
     make release
 
 Usage:  
